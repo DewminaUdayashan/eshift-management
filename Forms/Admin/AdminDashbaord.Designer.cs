@@ -32,7 +32,8 @@
             this.buttonReports = new System.Windows.Forms.Button();
             this.buttonJobs = new System.Windows.Forms.Button();
             this.buttonUnits = new System.Windows.Forms.Button();
-            this.buttonResources = new System.Windows.Forms.Button();
+            this.buttonEmployees = new System.Windows.Forms.Button();
+            this.buttonTrucks = new System.Windows.Forms.Button();
             this.buttonCustomers = new System.Windows.Forms.Button();
             this.buttonDashboard = new System.Windows.Forms.Button();
             this.panelLogo = new System.Windows.Forms.Panel();
@@ -48,7 +49,8 @@
             this.panelMenu.Controls.Add(this.buttonReports);
             this.panelMenu.Controls.Add(this.buttonJobs);
             this.panelMenu.Controls.Add(this.buttonUnits);
-            this.panelMenu.Controls.Add(this.buttonResources);
+            this.panelMenu.Controls.Add(this.buttonEmployees);
+            this.panelMenu.Controls.Add(this.buttonTrucks);
             this.panelMenu.Controls.Add(this.buttonCustomers);
             this.panelMenu.Controls.Add(this.buttonDashboard);
             this.panelMenu.Controls.Add(this.panelLogo);
@@ -66,7 +68,7 @@
             this.buttonReports.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonReports.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonReports.ForeColor = System.Drawing.Color.Gainsboro;
-            this.buttonReports.Location = new System.Drawing.Point(0, 380);
+            this.buttonReports.Location = new System.Drawing.Point(0, 440);
             this.buttonReports.Name = "buttonReports";
             this.buttonReports.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
             this.buttonReports.Size = new System.Drawing.Size(220, 60);
@@ -84,7 +86,7 @@
             this.buttonJobs.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonJobs.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonJobs.ForeColor = System.Drawing.Color.Gainsboro;
-            this.buttonJobs.Location = new System.Drawing.Point(0, 320);
+            this.buttonJobs.Location = new System.Drawing.Point(0, 380);
             this.buttonJobs.Name = "buttonJobs";
             this.buttonJobs.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
             this.buttonJobs.Size = new System.Drawing.Size(220, 60);
@@ -102,7 +104,7 @@
             this.buttonUnits.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.buttonUnits.ForeColor = System.Drawing.Color.Gainsboro;
-            this.buttonUnits.Location = new System.Drawing.Point(0, 260);
+            this.buttonUnits.Location = new System.Drawing.Point(0, 320);
             this.buttonUnits.Name = "buttonUnits";
             this.buttonUnits.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
             this.buttonUnits.Size = new System.Drawing.Size(220, 60);
@@ -113,23 +115,41 @@
             this.buttonUnits.UseVisualStyleBackColor = true;
             this.buttonUnits.Click += new System.EventHandler(this.buttonUnits_Click);
             // 
-            // buttonResources
+            // buttonEmployees
             // 
-            this.buttonResources.Dock = System.Windows.Forms.DockStyle.Top;
-            this.buttonResources.FlatAppearance.BorderSize = 0;
-            this.buttonResources.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonResources.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.buttonResources.ForeColor = System.Drawing.Color.Gainsboro;
-            this.buttonResources.Location = new System.Drawing.Point(0, 200);
-            this.buttonResources.Name = "buttonResources";
-            this.buttonResources.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-            this.buttonResources.Size = new System.Drawing.Size(220, 60);
-            this.buttonResources.TabIndex = 3;
-            this.buttonResources.Text = "  Resources";
-            this.buttonResources.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.buttonResources.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.buttonResources.UseVisualStyleBackColor = true;
-            this.buttonResources.Click += new System.EventHandler(this.buttonResources_Click);
+            this.buttonEmployees.Dock = System.Windows.Forms.DockStyle.Top;
+            this.buttonEmployees.FlatAppearance.BorderSize = 0;
+            this.buttonEmployees.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonEmployees.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonEmployees.ForeColor = System.Drawing.Color.Gainsboro;
+            this.buttonEmployees.Location = new System.Drawing.Point(0, 260);
+            this.buttonEmployees.Name = "buttonEmployees";
+            this.buttonEmployees.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
+            this.buttonEmployees.Size = new System.Drawing.Size(220, 60);
+            this.buttonEmployees.TabIndex = 7;
+            this.buttonEmployees.Text = "  Employees";
+            this.buttonEmployees.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.buttonEmployees.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.buttonEmployees.UseVisualStyleBackColor = true;
+            this.buttonEmployees.Click += new System.EventHandler(this.buttonEmployees_Click);
+            //
+            // buttonTrucks
+            // 
+            this.buttonTrucks.Dock = System.Windows.Forms.DockStyle.Top;
+            this.buttonTrucks.FlatAppearance.BorderSize = 0;
+            this.buttonTrucks.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonTrucks.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonTrucks.ForeColor = System.Drawing.Color.Gainsboro;
+            this.buttonTrucks.Location = new System.Drawing.Point(0, 200);
+            this.buttonTrucks.Name = "buttonTrucks";
+            this.buttonTrucks.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
+            this.buttonTrucks.Size = new System.Drawing.Size(220, 60);
+            this.buttonTrucks.TabIndex = 3;
+            this.buttonTrucks.Text = "  Trucks";
+            this.buttonTrucks.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.buttonTrucks.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.buttonTrucks.UseVisualStyleBackColor = true;
+            this.buttonTrucks.Click += new System.EventHandler(this.buttonTrucks_Click);
             // 
             // buttonCustomers
             // 
@@ -222,7 +242,8 @@
         private System.Windows.Forms.Button buttonReports;
         private System.Windows.Forms.Button buttonJobs;
         private System.Windows.Forms.Button buttonUnits;
-        private System.Windows.Forms.Button buttonResources;
+        private System.Windows.Forms.Button buttonTrucks;
+        private System.Windows.Forms.Button buttonEmployees;
         private System.Windows.Forms.Button buttonCustomers;
         private System.Windows.Forms.PictureBox pictureBoxLogo;
         private System.Windows.Forms.Panel panelMain;
