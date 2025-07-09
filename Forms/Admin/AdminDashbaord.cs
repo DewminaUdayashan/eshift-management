@@ -110,7 +110,7 @@ namespace eshift_management
         private void buttonReports_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            // TODO: Create and show Reports pane
+            ShowPane(new ReportsPane());
         }
     }
 }
