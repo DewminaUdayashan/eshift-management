@@ -19,6 +19,15 @@ namespace eshift_management
 
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
+            materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT; 
+            materialSkinManager.ColorScheme = new ColorScheme(
+                Primary.Indigo700,     // Blue sidebar/header/buttons
+                Primary.Indigo800,     // Darker version
+                Primary.Indigo500,     // Lighter tone
+                Accent.Blue200,        // Subtle accent
+                TextShade.WHITE        // White text on dark areas
+            );
+
 
             panelMenu.BackColor = materialSkinManager.ColorScheme.PrimaryColor;
             panelLogo.BackColor = materialSkinManager.ColorScheme.DarkPrimaryColor;
@@ -87,12 +96,13 @@ namespace eshift_management
         private void buttonEmployees_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
+            ShowPane(new EmployeesPane());
         }
 
         private void buttonUnits_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            // TODO: Create and show Transport Units pane
+            ShowPane(new TransportUnitsPane());
         }
 
         private void buttonJobs_Click(object sender, EventArgs e)
