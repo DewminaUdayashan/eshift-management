@@ -1,10 +1,6 @@
 ﻿using eshift_management.Panes;
 using MaterialSkin;
 using MaterialSkin.Controls;
-using System;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace eshift_management
 {
@@ -108,7 +104,7 @@ namespace eshift_management
         private void buttonJobs_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            // TODO: Create and show Jobs pane
+            ShowPane(new JobsPane());
         }
 
         private void buttonReports_Click(object sender, EventArgs e)
