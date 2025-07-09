@@ -1,9 +1,6 @@
 ﻿using eshift_management.Forms;
 using eshift_management.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
+using eshift_management.UI;
 
 namespace eshift_management.Panes
 {
@@ -25,14 +22,16 @@ namespace eshift_management.Panes
 
         private void SetupGrid()
         {
+            // Subscribe to the CellPainting event for custom drawing
+            dataGridViewJobs.CellPainting += dataGridViewJobs_CellPainting;
+
             dataGridViewJobs.AutoGenerateColumns = false;
             dataGridViewJobs.Columns.Clear();
             AddGridColumn("Id", "Job ID");
             AddGridColumn("CustomerName", "Customer");
             AddGridColumn("PickupDate", "Pickup Date");
-            AddGridColumn("Status", "Status");
+            AddGridColumn("Status", "Status"); // The column whose cells we will custom paint
         }
-
         private void AddGridColumn(string dataPropertyName, string headerText)
         {
             var column = new DataGridViewTextBoxColumn
@@ -44,6 +43,31 @@ namespace eshift_management.Panes
             };
             dataGridViewJobs.Columns.Add(column);
         }
+
+
+        private void dataGridViewJobs_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            // Check if we are in the "Status" column and not in the header row
+            if (e.ColumnIndex == dataGridViewJobs.Columns["Status"].Index && e.RowIndex >= 0)
+            {
+                // Prevent the default paint
+                e.Handled = true;
+
+                // Paint the cell background
+                e.PaintBackground(e.CellBounds, true);
+
+                // Get the Job object for the current row
+                var jobId = dataGridViewJobs.Rows[e.RowIndex].Cells["Id"].Value.ToString();
+                var job = allJobs.FirstOrDefault(j => j.Id == jobId);
+
+                if (job != null)
+                {
+                    // Call our reusable helper to draw the chip
+                    ControlHelpers.DrawStatusChip(e.Graphics, e.CellBounds, job.Status);
+                }
+            }
+        }
+
 
         private void LoadDummyData()
         {
@@ -66,12 +90,12 @@ namespace eshift_management.Panes
 
             allJobs = new List<Job>
             {
-                new Job { Id = "JOB-001", Customer = cust1, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", Status = JobStatus.Pending, AssignedUnit = null, TotalCost=0, EstimatedHours=0, RejectionReason="" },
-                new Job { Id = "JOB-002", Customer = cust2, PickupLocation = "Galle", DropoffLocation = "Jaffna", PickupDate = DateTime.Now.AddDays(10), LoadSize = "Large (5+ rooms)", Description = "Requires piano transport.", Status = JobStatus.Approved, TotalCost = 75000, EstimatedHours = 12, AssignedUnit=null, RejectionReason=""},
-                new Job { Id = "JOB-003", Customer = cust3, PickupLocation = "Negombo", DropoffLocation = "Trincomalee", PickupDate = DateTime.Now.AddDays(2), LoadSize = "Small (1-2 rooms)", Description = "Studio apartment move.", Status = JobStatus.Scheduled, AssignedUnit = assignedUnit, TotalCost = 40000, EstimatedHours = 8, RejectionReason=""},
-                new Job { Id = "JOB-004", Customer = cust4, PickupLocation = "Matara", DropoffLocation = "Batticaloa", PickupDate = DateTime.Now, LoadSize = "Medium (3-4 rooms)", Description = "", Status = JobStatus.OnGoing, AssignedUnit = assignedUnit, TotalCost = 60000, EstimatedHours = 10, RejectionReason=""},
-                new Job { Id = "JOB-005", Customer = cust1, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), LoadSize = "Small (1-2 rooms)", Description = "Completed job.", Status = JobStatus.Completed, AssignedUnit = assignedUnit, TotalCost = 35000, EstimatedHours = 7, RejectionReason=""},
-                new Job { Id = "JOB-006", Customer = cust2, PickupLocation = "Ratnapura", DropoffLocation = "Galle", PickupDate = DateTime.Now.AddDays(8), LoadSize = "Large (5+ rooms)", Description = "Canceled by admin.", Status = JobStatus.Canceled, TotalCost = 0, EstimatedHours = 0, AssignedUnit=null, RejectionReason=""},
+                 new Job { Id = "JOB-001", Customer = cust1, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", Status = JobStatus.Pending, AssignedUnit = null, TotalCost=0, EstimatedHours=0, RejectionReason="" },
+                 new Job { Id = "JOB-002", Customer = cust2, PickupLocation = "Galle", DropoffLocation = "Jaffna", PickupDate = DateTime.Now.AddDays(10), LoadSize = "Large (5+ rooms)", Description = "Requires piano transport.", Status = JobStatus.Approved, TotalCost = 75000, EstimatedHours = 12, AssignedUnit=null, RejectionReason=""},
+                 new Job { Id = "JOB-003", Customer = cust3, PickupLocation = "Negombo", DropoffLocation = "Trincomalee", PickupDate = DateTime.Now.AddDays(2), LoadSize = "Small (1-2 rooms)", Description = "Studio apartment move.", Status = JobStatus.Scheduled, AssignedUnit = assignedUnit, TotalCost = 40000, EstimatedHours = 8, RejectionReason=""},
+                 new Job { Id = "JOB-004", Customer = cust4, PickupLocation = "Matara", DropoffLocation = "Batticaloa", PickupDate = DateTime.Now, LoadSize = "Medium (3-4 rooms)", Description = "", Status = JobStatus.OnGoing, AssignedUnit = assignedUnit, TotalCost = 60000, EstimatedHours = 10, RejectionReason=""},
+                 new Job { Id = "JOB-005", Customer = cust1, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), LoadSize = "Small (1-2 rooms)", Description = "Completed job.", Status = JobStatus.Completed, AssignedUnit = assignedUnit, TotalCost = 35000, EstimatedHours = 7, RejectionReason=""},
+                 new Job { Id = "JOB-006", Customer = cust2, PickupLocation = "Ratnapura", DropoffLocation = "Galle", PickupDate = DateTime.Now.AddDays(8), LoadSize = "Large (5+ rooms)", Description = "Canceled by admin.", Status = JobStatus.Canceled, TotalCost = 0, EstimatedHours = 0, AssignedUnit=null, RejectionReason=""},
             };
         }
 
@@ -111,20 +135,16 @@ namespace eshift_management.Panes
                 panelPlaceholder.Visible = true;
                 return;
             }
-
             panelDetails.Visible = true;
             panelActions.Visible = true;
             panelPlaceholder.Visible = false;
-
             selectedJob = job;
-
             labelCustomerName.Text = job.Customer.FullName;
             labelPickup.Text = $"{job.PickupLocation} on {job.PickupDate:D}";
             labelDropoff.Text = job.DropoffLocation;
             labelLoadSize.Text = job.LoadSize;
             textBoxDescription.Text = job.Description;
             labelAssignedUnitValue.Text = job.AssignedUnit != null ? $"{job.AssignedUnit.UnitName} ({job.AssignedUnit.Truck.LicensePlate})" : "N/A";
-
             UpdateActionButtons(job.Status);
         }
 
@@ -134,7 +154,6 @@ namespace eshift_management.Panes
             {
                 button.Visible = false;
             }
-
             switch (status)
             {
                 case JobStatus.Pending:
@@ -213,19 +232,16 @@ namespace eshift_management.Panes
             var availableUnits = allUnits.Where(u => u.Status == ResourceStatus.Available).ToList();
             if (selectedJob.AssignedUnit != null)
             {
-                availableUnits.Add(selectedJob.AssignedUnit); // Add the currently assigned unit to the list of choices
+                availableUnits.Add(selectedJob.AssignedUnit);
             }
-
             using (var form = new AssignUnitForm(availableUnits))
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    // If a unit was previously assigned, free it up
                     if (selectedJob.AssignedUnit != null)
                     {
                         selectedJob.AssignedUnit.Status = ResourceStatus.Available;
                     }
-
                     selectedJob.Status = JobStatus.Scheduled;
                     selectedJob.AssignedUnit = form.SelectedUnit;
                     selectedJob.AssignedUnit.Status = ResourceStatus.Assigned;
@@ -247,7 +263,7 @@ namespace eshift_management.Panes
         private void buttonComplete_Click(object sender, EventArgs e)
         {
             selectedJob.Status = JobStatus.Completed;
-            selectedJob.AssignedUnit.Status = ResourceStatus.Available; // Free up the unit
+            selectedJob.AssignedUnit.Status = ResourceStatus.Available;
             UpdateGridDisplay();
             DisplayJobDetails(selectedJob);
             MessageBox.Show("Job has been marked as Completed.");
@@ -260,7 +276,7 @@ namespace eshift_management.Panes
                 selectedJob.Status = JobStatus.Canceled;
                 if (selectedJob.AssignedUnit != null)
                 {
-                    selectedJob.AssignedUnit.Status = ResourceStatus.Available; // Free up the unit
+                    selectedJob.AssignedUnit.Status = ResourceStatus.Available;
                 }
                 UpdateGridDisplay();
                 DisplayJobDetails(selectedJob);
