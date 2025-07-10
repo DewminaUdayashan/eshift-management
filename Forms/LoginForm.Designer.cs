@@ -1,6 +1,6 @@
 ﻿namespace eshift_management
 {
-    partial class Login
+    partial class LoginForm
     {
         /// <summary>
         ///  Required designer variable.
