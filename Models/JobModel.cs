@@ -1,4 +1,6 @@
-﻿namespace eshift_management.Models
+﻿using FluentValidation;
+
+namespace eshift_management.Models
 {
     public class Job
     {
@@ -16,5 +18,15 @@
         public int EstimatedHours { get; set; }
         public string? RejectionReason { get; set; }
         public TransportUnit? AssignedUnit { get; set; }
+    }
+    public class JobValidator : AbstractValidator<Job>
+    {
+        public JobValidator()
+        {
+            RuleFor(j => j.PickupLocation).NotEmpty().WithMessage("Pickup address is required.");
+            RuleFor(j => j.DropoffLocation).NotEmpty().WithMessage("Dropoff address is required.");
+            RuleFor(j => j.LoadSize).NotEmpty().WithMessage("Load size must be selected.");
+            RuleFor(j => j.PickupDate).GreaterThan(DateTime.Now).WithMessage("Pickup date must be in the future.");
+        }
     }
 }

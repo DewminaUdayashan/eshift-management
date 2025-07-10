@@ -1,4 +1,5 @@
-﻿using eshift_management.Models;
+﻿using eshift_management.Forms; // Add this using directive
+using eshift_management.Models;
 using eshift_management.UI;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace eshift_management.Panes
     {
         private List<Job> allJobs;
         private Job selectedJob;
+        private CustomerModel loggedInCustomer;
 
         public CustomerJobsPane()
         {
@@ -19,6 +21,63 @@ namespace eshift_management.Panes
             SetupGrid();
             UpdateGridDisplay();
             DisplayJobDetails(null);
+        }
+
+        private void buttonEditJob_Click(object sender, EventArgs e)
+        {
+            if (selectedJob == null) return;
+
+            using (var form = new PlaceJobForm(loggedInCustomer, selectedJob))
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    var originalJob = allJobs.FirstOrDefault(j => j.Id == selectedJob.Id);
+                    if (originalJob != null)
+                    {
+                        originalJob.PickupLocation = form.TheJob.PickupLocation;
+                        originalJob.DropoffLocation = form.TheJob.DropoffLocation;
+                        originalJob.PickupDate = form.TheJob.PickupDate;
+                        originalJob.LoadSize = form.TheJob.LoadSize;
+                        originalJob.Description = form.TheJob.Description;
+                    }
+                    UpdateGridDisplay();
+                    MessageBox.Show("Your job has been updated.", "Job Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void buttonViewInvoice_Click(object sender, EventArgs e)
+        {
+            if (selectedJob == null || selectedJob.Status != JobStatus.Completed) return;
+
+            // Open the new invoice viewer form
+            using (var form = new InvoiceViewerForm(selectedJob))
+            {
+                form.ShowDialog();
+            }
+        }
+
+        #region Unchanged Methods
+        private void LoadDummyData()
+        {
+            loggedInCustomer = new CustomerModel
+            {
+                Id = "CUST-001",
+                FirstName = "John",
+                LastName = "Smith",
+                Email = "john.s@example.com",
+                Phone = "077-1234567",
+                AddressLine = "123 Galle Rd",
+                City = "Panadura",
+                PostalCode = "12500"
+            };
+
+            allJobs = new List<Job>
+            {
+                new Job { Id = "JOB-001", Customer = loggedInCustomer, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), Status = JobStatus.Pending, LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", TotalCost = 0, EstimatedHours = 0, RejectionReason = "", AssignedUnit = null },
+                new Job { Id = "JOB-005", Customer = loggedInCustomer, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), Status = JobStatus.Completed, TotalCost = 35000, LoadSize = "Small (1-2 rooms)", Description = "Everything went smoothly.", EstimatedHours = 7, RejectionReason = "", AssignedUnit = null },
+                new Job { Id = "JOB-007", Customer = loggedInCustomer, PickupLocation = "Gampaha", DropoffLocation = "Matara", PickupDate = DateTime.Now.AddDays(20), Status = JobStatus.Approved, LoadSize = "Large (5+ rooms)", Description = "Awaiting unit assignment.", TotalCost = 95000, EstimatedHours = 14, RejectionReason = "", AssignedUnit = null },
+            };
         }
 
         private void SetupGrid()
@@ -33,15 +92,18 @@ namespace eshift_management.Panes
             AddGridColumn("DropoffLocation", "To");
         }
 
-        // ... (rest of the methods are unchanged from the previous version) ...
-
         private void buttonAddNewJob_Click(object sender, EventArgs e)
         {
-            // This is the new home for the Place New Job logic
-            MessageBox.Show("The form to place a new job will be implemented here.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (var form = new PlaceJobForm(loggedInCustomer))
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    allJobs.Add(form.TheJob);
+                    UpdateGridDisplay();
+                    MessageBox.Show("Your job has been submitted for review.", "Job Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
         }
-
-        #region Unchanged Methods
         private void AddGridColumn(string dataPropertyName, string headerText)
         {
             var column = new DataGridViewTextBoxColumn
@@ -60,35 +122,12 @@ namespace eshift_management.Panes
             {
                 e.Handled = true;
                 e.PaintBackground(e.CellBounds, true);
-                // The 'dynamic' keyword is used here for simplicity with anonymous types
                 var jobData = dataGridViewJobs.Rows[e.RowIndex].DataBoundItem as dynamic;
                 if (jobData != null)
                 {
                     ControlHelpers.DrawStatusChip(e.Graphics, e.CellBounds, jobData.Status);
                 }
             }
-        }
-
-        private void LoadDummyData()
-        {
-            var loggedInCustomer = new CustomerModel
-            {
-                Id = "CUST-001",
-                FirstName = "John",
-                LastName = "Smith",
-                Email = "john.s@example.com",
-                Phone = "077-1234567",
-                AddressLine = "123 Galle Rd",
-                City = "Panadura",
-                PostalCode = "12500"
-            };
-
-            allJobs = new List<Job>
-            {
-                new Job { Id = "JOB-001", Customer = loggedInCustomer, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), Status = JobStatus.Pending, LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", TotalCost = 0, EstimatedHours = 0, RejectionReason = "", AssignedUnit = null },
-                new Job { Id = "JOB-005", Customer = loggedInCustomer, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), Status = JobStatus.Completed, TotalCost = 35000, LoadSize = "Small (1-2 rooms)", Description = "Everything went smoothly.", EstimatedHours = 7, RejectionReason = "", AssignedUnit = null },
-                new Job { Id = "JOB-007", Customer = loggedInCustomer, PickupLocation = "Gampaha", DropoffLocation = "Matara", PickupDate = DateTime.Now.AddDays(20), Status = JobStatus.Approved, LoadSize = "Large (5+ rooms)", Description = "Awaiting unit assignment.", TotalCost = 95000, EstimatedHours = 14, RejectionReason = "", AssignedUnit = null },
-            };
         }
 
         private void UpdateGridDisplay()
@@ -111,6 +150,7 @@ namespace eshift_management.Panes
             {
                 panelDetails.Visible = false;
                 panelActions.Visible = false;
+                labelDetailsTitle.Text = "Select a job to see details";
                 return;
             }
             panelDetails.Visible = true;
@@ -140,16 +180,6 @@ namespace eshift_management.Panes
             {
                 DisplayJobDetails(null);
             }
-        }
-
-        private void buttonEditJob_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show($"Editing for Job #{selectedJob.Id} will be implemented here.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void buttonViewInvoice_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show($"Invoice for Job #{selectedJob.Id} will be shown here.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         #endregion
     }
