@@ -19,6 +19,14 @@ namespace eshift_management
 
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
+            materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
+            materialSkinManager.ColorScheme = new ColorScheme(
+                Primary.Indigo700,     // Blue sidebar/header/buttons
+                Primary.Indigo800,     // Darker version
+                Primary.Indigo500,     // Lighter tone
+                Accent.Blue200,        // Subtle accent
+                TextShade.WHITE        // White text on dark areas
+            );
 
             panelMenu.BackColor = materialSkinManager.ColorScheme.PrimaryColor;
             panelLogo.BackColor = materialSkinManager.ColorScheme.DarkPrimaryColor;
@@ -30,7 +38,6 @@ namespace eshift_management
                 button.ForeColor = Color.Gainsboro;
             }
 
-            // Default to My Jobs view
             ActivateButton(buttonMyJobs);
             ShowPane(new CustomerJobsPane());
         }
@@ -74,10 +81,15 @@ namespace eshift_management
             ShowPane(new CustomerJobsPane());
         }
 
+        private void buttonPlaceJob_Click(object sender, EventArgs e)
+        {
+            // This button is now on the CustomerJobsPane
+        }
+
         private void buttonProfile_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            MessageBox.Show("My Profile pane will be implemented here.");
+            ShowPane(new CustomerProfilePane());
         }
     }
 }
