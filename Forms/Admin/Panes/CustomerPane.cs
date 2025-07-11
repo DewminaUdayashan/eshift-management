@@ -79,11 +79,11 @@ namespace eshift_management
         {
             allCustomers = new List<CustomerModel>
             {
-                new CustomerModel { Id = "CUST-001", FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City="Springfield", PostalCode="12345", OngoingJobs = 2 },
-                new CustomerModel { Id = "CUST-002", FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City="Shelbyville", PostalCode="23456", OngoingJobs = 0 },
-                new CustomerModel { Id = "CUST-003", FirstName = "Peter", LastName = "Jones", Email = "peter.jones@example.com", Phone = "555-0103", AddressLine = "789 Pine Ln", City="Capital City", PostalCode="34567", OngoingJobs = 1 },
-                new CustomerModel { Id = "CUST-004", FirstName = "Mary", LastName = "Johnson", Email = "mary.j@example.com", Phone = "555-0104", AddressLine = "101 Elm Ct", City="Ogdenville", PostalCode="45678", OngoingJobs = 0 },
-                new CustomerModel { Id = "CUST-005", FirstName = "David", LastName = "Williams", Email = "d.williams@example.com", Phone = "555-0105", AddressLine = "212 Birch Rd", City="North Haverbrook", PostalCode="56789", OngoingJobs = 3 }
+                new CustomerModel { Id = 0, UserId=0, FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City="Springfield", PostalCode="12345", OngoingJobs = 2 },
+                new CustomerModel { Id = 1, UserId=0,FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City="Shelbyville", PostalCode="23456", OngoingJobs = 0 },
+                new CustomerModel { Id = 2, UserId=0,FirstName = "Peter", LastName = "Jones", Email = "peter.jones@example.com", Phone = "555-0103", AddressLine = "789 Pine Ln", City="Capital City", PostalCode="34567", OngoingJobs = 1 },
+                new CustomerModel { Id = 3, UserId=0,FirstName = "Mary", LastName = "Johnson", Email = "mary.j@example.com", Phone = "555-0104", AddressLine = "101 Elm Ct", City="Ogdenville", PostalCode="45678", OngoingJobs = 0 },
+                new CustomerModel { Id = 4, UserId=0,FirstName = "David", LastName = "Williams", Email = "d.williams@example.com", Phone = "555-0105", AddressLine = "212 Birch Rd", City="North Haverbrook", PostalCode="56789", OngoingJobs = 3 }
             };
 
             UpdateGridDisplay();
@@ -103,7 +103,6 @@ namespace eshift_management
             if (!string.IsNullOrEmpty(searchText))
             {
                 processedData = processedData.Where(c =>
-                    c.Id.ToLower().Contains(searchText) ||
                     c.FullName.ToLower().Contains(searchText) ||
                     c.Email.ToLower().Contains(searchText)
                 ).ToList();
@@ -147,7 +146,7 @@ namespace eshift_management
                 return;
 
             string customerId = dataGridViewCustomers.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-            var customerToEdit = allCustomers.FirstOrDefault(c => c.Id == customerId);
+            var customerToEdit = allCustomers.FirstOrDefault(c => c.Id.ToString() == customerId);
 
             if (customerToEdit != null)
             {
@@ -155,7 +154,7 @@ namespace eshift_management
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        int index = allCustomers.FindIndex(c => c.Id == customerId);
+                        int index = allCustomers.FindIndex(c => c.Id.ToString() == customerId);
                         if (index != -1)
                         {
                             allCustomers[index] = form.TheCustomer;

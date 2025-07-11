@@ -62,7 +62,7 @@ namespace eshift_management.Panes
         {
             loggedInCustomer = new CustomerModel
             {
-                Id = "CUST-001",
+                UserId = 0,
                 FirstName = "John",
                 LastName = "Smith",
                 Email = "john.s@example.com",

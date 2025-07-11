@@ -39,8 +39,8 @@ namespace eshift_management.Panes
             // Customers
             _customers = new List<CustomerModel>
             {
-                new CustomerModel { Id = "CUST-001", FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City = "Springfield", PostalCode = "12345" },
-                new CustomerModel { Id = "CUST-002", FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City = "Shelbyville", PostalCode = "54321" }
+                new CustomerModel { Id = 1,UserId=0, FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City = "Springfield", PostalCode = "12345" },
+                new CustomerModel { Id = 2,UserId=0, FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City = "Shelbyville", PostalCode = "54321" }
             };
 
             // Trucks

@@ -4,7 +4,8 @@ namespace eshift_management.Models
 {
     public class CustomerModel
     {
-        required public string Id { get; set; }
+        public int? Id { get; set; }
+        required public int? UserId { get; set; }
         required public string FirstName { get; set; }
         required public string LastName { get; set; }
         required public string Email { get; set; }
@@ -17,7 +18,7 @@ namespace eshift_management.Models
         public string FullName => $"{FirstName} {LastName}";
 
         // Property for the grid display
-        public int OngoingJobs { get; set; }
+        public int? OngoingJobs { get; set; }
     }
 
     public class CustomerValidator : AbstractValidator<CustomerModel>

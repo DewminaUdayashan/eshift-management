@@ -71,10 +71,10 @@ namespace eshift_management.Panes
 
         private void LoadDummyData()
         {
-            var cust1 = new CustomerModel { Id = "CUST-001", FirstName = "John", LastName = "Smith", Email = "j.s@mail.com", Phone = "111", AddressLine = "1", City = "1", PostalCode = "1" };
-            var cust2 = new CustomerModel { Id = "CUST-002", FirstName = "Jane", LastName = "Doe", Email = "j.d@mail.com", Phone = "222", AddressLine = "2", City = "2", PostalCode = "2" };
-            var cust3 = new CustomerModel { Id = "CUST-003", FirstName = "Peter", LastName = "Jones", Email = "p.j@mail.com", Phone = "333", AddressLine = "3", City = "3", PostalCode = "3" };
-            var cust4 = new CustomerModel { Id = "CUST-004", FirstName = "Mary", LastName = "Johnson", Email = "m.j@mail.com", Phone = "444", AddressLine = "4", City = "4", PostalCode = "4" };
+            var cust1 = new CustomerModel { Id = 1, UserId = 0, FirstName = "John", LastName = "Smith", Email = "j.s@mail.com", Phone = "111", AddressLine = "1", City = "1", PostalCode = "1" };
+            var cust2 = new CustomerModel { Id = 2, UserId = 0, FirstName = "Jane", LastName = "Doe", Email = "j.d@mail.com", Phone = "222", AddressLine = "2", City = "2", PostalCode = "2" };
+            var cust3 = new CustomerModel { Id = 3, UserId = 0, FirstName = "Peter", LastName = "Jones", Email = "p.j@mail.com", Phone = "333", AddressLine = "3", City = "3", PostalCode = "3" };
+            var cust4 = new CustomerModel { Id = 4, UserId = 0, FirstName = "Mary", LastName = "Johnson", Email = "m.j@mail.com", Phone = "444", AddressLine = "4", City = "4", PostalCode = "4" };
 
             var truck1 = new Truck { Id = "TRK-01", Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available };
             var truck2 = new Truck { Id = "TRK-02", Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned };
