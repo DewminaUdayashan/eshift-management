@@ -23,7 +23,7 @@ namespace eshift_management.Core.Repositories
         /// <param name="orderBy">The column name to sort by.</param>
         /// <param name="isAscending">True for ascending order, false for descending.</param>
         /// <returns>A collection of entities.</returns>
-        Task<IEnumerable<T>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true);
+        Task<IEnumerable<T>> GetAllAsync(Dictionary<string, object>? filter = null, string? orderBy = null, bool isAscending = true);
 
         /// <summary>
         /// Adds a new entity to the database.

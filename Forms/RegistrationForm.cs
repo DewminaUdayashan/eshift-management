@@ -22,6 +22,7 @@ namespace eshift_management.Forms
         private int cooldownSeconds;
         private List<Label> errorLabels;
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
         private UserModel _registeredUser; // Store the user returned from registration
 
 
@@ -34,6 +35,7 @@ namespace eshift_management.Forms
             InitializeErrorLabels();
             pictureBoxLogo.Image = Properties.Resources.e_shift_logo;
             _authService = new AuthService(new UserRepository(), new CustomerRepository(), new EmailService());
+            _userService = new UserService(new UserRepository());
         }
 
         /// <summary>
@@ -76,77 +78,87 @@ namespace eshift_management.Forms
         /// </summary>
         private async void buttonNext_Click(object sender, EventArgs e)
         {
-            ClearErrorLabels();
-            var model = new RegistrationModel
-            {
-                FirstName = textBoxFirstName.Text,
-                LastName = textBoxLastName.Text,
-                Email = textBoxEmail.Text,
-                Phone = textBoxPhone.Text,
-                AddressLine = textBoxAddress.Text,
-                City = textBoxCity.Text,
-                PostalCode = textBoxPostalCode.Text,
-                Password = textBoxPassword.Text,
-                ConfirmPassword = textBoxConfirmPassword.Text
-            };
+            buttonNext.Enabled = false;
+            var originalText = buttonNext.Text;
+            buttonNext.Text = "Registering...";
 
-            var validator = new RegistrationValidator();
-            var validationResult = validator.Validate(model);
-
-            if (!validationResult.IsValid)
+            try
             {
-                foreach (var error in validationResult.Errors)
+                ClearErrorLabels();
+
                 {
-                    switch (error.PropertyName)
+                    FirstName = textBoxFirstName.Text,
+                    LastName = textBoxLastName.Text,
+                    Email = textBoxEmail.Text,
+                    Phone = textBoxPhone.Text,
+                    AddressLine = textBoxAddress.Text,
+                    City = textBoxCity.Text,
+                    PostalCode = textBoxPostalCode.Text,
+                    Password = textBoxPassword.Text,
+                    ConfirmPassword = textBoxConfirmPassword.Text
+                };
+
+                var validator = new RegistrationValidator();
+                var validationResult = validator.Validate(model);
+
+                if (!validationResult.IsValid)
+                {
+                    foreach (var error in validationResult.Errors)
                     {
-                        case nameof(model.FirstName): labelFirstNameError.Text = error.ErrorMessage; labelFirstNameError.Visible = true; break;
-                        case nameof(model.LastName): labelLastNameError.Text = error.ErrorMessage; labelLastNameError.Visible = true; break;
-                        case nameof(model.Email): labelEmailError.Text = error.ErrorMessage; labelEmailError.Visible = true; break;
-                        case nameof(model.Phone): labelPhoneError.Text = error.ErrorMessage; labelPhoneError.Visible = true; break;
-                        case nameof(model.AddressLine): labelAddressError.Text = error.ErrorMessage; labelAddressError.Visible = true; break;
-                        case nameof(model.City): labelCityError.Text = error.ErrorMessage; labelCityError.Visible = true; break;
-                        case nameof(model.PostalCode): labelPostalCodeError.Text = error.ErrorMessage; labelPostalCodeError.Visible = true; break;
-                        case nameof(model.Password): labelPasswordError.Text = error.ErrorMessage; labelPasswordError.Visible = true; break;
-                        case nameof(model.ConfirmPassword): labelConfirmPasswordError.Text = error.ErrorMessage; labelConfirmPasswordError.Visible = true; break;
+                        switch (error.PropertyName)
+                        {
+                            case nameof(model.FirstName): labelFirstNameError.Text = error.ErrorMessage; labelFirstNameError.Visible = true; break;
+                            case nameof(model.LastName): labelLastNameError.Text = error.ErrorMessage; labelLastNameError.Visible = true; break;
+                            case nameof(model.Email): labelEmailError.Text = error.ErrorMessage; labelEmailError.Visible = true; break;
+                            case nameof(model.Phone): labelPhoneError.Text = error.ErrorMessage; labelPhoneError.Visible = true; break;
+                            case nameof(model.AddressLine): labelAddressError.Text = error.ErrorMessage; labelAddressError.Visible = true; break;
+                            case nameof(model.City): labelCityError.Text = error.ErrorMessage; labelCityError.Visible = true; break;
+                            case nameof(model.PostalCode): labelPostalCodeError.Text = error.ErrorMessage; labelPostalCodeError.Visible = true; break;
+                            case nameof(model.Password): labelPasswordError.Text = error.ErrorMessage; labelPasswordError.Visible = true; break;
+                            case nameof(model.ConfirmPassword): labelConfirmPasswordError.Text = error.ErrorMessage; labelConfirmPasswordError.Visible = true; break;
+                        }
                     }
+                    return;
                 }
-                return;
+
+                var customer = new CustomerModel
+                {
+                    FirstName = textBoxFirstName.Text,
+                    LastName = textBoxLastName.Text,
+                    Email = textBoxEmail.Text,
+                    Phone = textBoxPhone.Text,
+                    AddressLine = textBoxAddress.Text,
+                    City = textBoxCity.Text,
+                    PostalCode = textBoxPostalCode.Text
+                };
+
+                var user = new UserModel
+                {
+                    Email = textBoxEmail.Text,
+                    UserType = "Customer",
+                    IsEmailVerified = false,
+                    PasswordHash = textBoxPassword.Text // Will be hashed in service
+                };
+
+                var (isSuccess, errorMessage, registeredUser) = await _authService.RegisterAsync(user, customer);
+                if (!isSuccess)
+                {
+                    MessageBox.Show(errorMessage ?? "Registration failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                _registeredUser = registeredUser!;
+                MessageBox.Show("An OTP has been sent to your email.", "OTP Sent", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                StartOtpCooldown();
+                tabControl.SelectedIndex = 1;
             }
-
-            var customer = new CustomerModel
+            finally
             {
-                OngoingJobs = 0,
-                UserId = 0, // This will be set after user registration
-                Id = 0, // This will be set after customer registration
-                FirstName = textBoxFirstName.Text,
-                LastName = textBoxLastName.Text,
-                Email = textBoxEmail.Text,
-                Phone = textBoxPhone.Text,
-                AddressLine = textBoxAddress.Text,
-                City = textBoxCity.Text,
-                PostalCode = textBoxPostalCode.Text
-            };
-
-            var user = new UserModel
-            {
-                Email = textBoxEmail.Text,
-                UserType= "Customer",
-                IsEmailVerified = false,
-                PasswordHash = textBoxPassword.Text, // This will be hashed in the service
-            };
-
-            var (isSuccess, errorMessage, registeredUser) = await _authService.RegisterAsync(user, customer);
-            if (!isSuccess)
-            {
-                MessageBox.Show(errorMessage ?? "Registration failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                buttonNext.Enabled = true;
+                buttonNext.Text = originalText;
             }
-
-            _registeredUser = registeredUser!;
-            MessageBox.Show("An OTP has been sent to your email.", "OTP Sent", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            StartOtpCooldown();
-            tabControl.SelectedIndex = 1;
         }
+
 
         /// <summary>
         /// Handles the OTP verification logic.
@@ -156,6 +168,8 @@ namespace eshift_management.Forms
         {
             if (textBoxOtp.Text == _registeredUser.temporaryOTP)
             {
+                _registeredUser.IsEmailVerified = true; // Mark user as verified
+                _userService.UpdateAsync(_registeredUser);
                 MessageBox.Show("Registration successful! You will now be taken to your dashboard.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Hide();

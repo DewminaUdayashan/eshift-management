@@ -5,7 +5,7 @@ namespace eshift_management.Models
     public class CustomerModel
     {
         public int? Id { get; set; }
-        required public int? UserId { get; set; }
+        public int? UserId { get; set; }
         required public string FirstName { get; set; }
         required public string LastName { get; set; }
         required public string Email { get; set; }
