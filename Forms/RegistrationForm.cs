@@ -86,6 +86,7 @@ namespace eshift_management.Forms
             {
                 ClearErrorLabels();
 
+                var model = new RegistrationModel
                 {
                     FirstName = textBoxFirstName.Text,
                     LastName = textBoxLastName.Text,
