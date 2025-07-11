@@ -1,7 +1,5 @@
 ﻿using Dapper;
 using MySql.Data.MySqlClient;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace eshift_management.Data
 {

@@ -1,3 +1,5 @@
+using Dapper;
+
 namespace eshift_management
 {
     internal static class Program
@@ -10,6 +12,7 @@ namespace eshift_management
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
+            SqlMapper.AddTypeHandler(new UserTypeHandler());
             ApplicationConfiguration.Initialize();
             Application.Run(new LoginForm());
         }

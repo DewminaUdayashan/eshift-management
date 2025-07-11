@@ -138,7 +138,7 @@ namespace eshift_management.Forms
                 var user = new UserModel
                 {
                     Email = textBoxEmail.Text,
-                    UserType = "Customer",
+                    UserType = UserType.Customer,
                     IsEmailVerified = false,
                     PasswordHash = textBoxPassword.Text // Will be hashed in service
                 };

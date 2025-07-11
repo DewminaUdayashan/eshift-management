@@ -50,7 +50,10 @@ namespace eshift_management.Repositories.Services
         /// </returns>
         public async Task<UserModel?> FindByEmailAsync(string email)
         {
-            var sql = "SELECT * FROM users WHERE email = @Email LIMIT 1;";
+            var sql = @"SELECT id AS Id, email AS Email, password_hash AS PasswordHash, user_type AS UserType,
+is_email_verified AS IsEmailVerified FROM users 
+WHERE email = @Email 
+LIMIT 1;";
             return await DbExecutor.QueryFirstOrDefaultAsync<UserModel>(sql, new { Email = email });
         }
 
@@ -119,7 +122,6 @@ namespace eshift_management.Repositories.Services
             var sql = @"
         UPDATE users SET 
             email = @Email,
-            password_hash = @PasswordHash,
             user_type = @UserType,
             is_email_verified = @IsEmailVerified
         WHERE id = @Id;";

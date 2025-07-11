@@ -1,7 +1,12 @@
+using eshift_management.Core.Services;
 using eshift_management.Forms;
 using eshift_management.Models;
+using eshift_management.Repositories.Services;
+using eshift_management.Services.Implementations;
+using eshift_management.Services.Interfaces;
 using MaterialSkin;
 using MaterialSkin.Controls;
+using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Drawing;
 using System.Linq;
@@ -13,6 +18,9 @@ namespace eshift_management
     {
         private readonly LoginValidator _validator;
         private UserType _selectedUserType = UserType.None;
+        private readonly IAuthService _authService;
+        private readonly IUserService _userService;
+        private readonly ICustomerService _customerService;
 
         public LoginForm()
         {
@@ -28,6 +36,10 @@ namespace eshift_management
             labelSignIn.FontType = MaterialSkinManager.fontType.H5;
             labelEmail.FontType = MaterialSkinManager.fontType.Body1;
             labelPassword.FontType = MaterialSkinManager.fontType.Body1;
+
+            _userService = new UserService(new UserRepository());
+            _customerService = new CustomerService(new CustomerRepository());
+            _authService = new AuthService(_userService, _customerService, new EmailService());
 
             InitializeErrorLabels();
             InitializeUserTypeButtons();
@@ -54,53 +66,81 @@ namespace eshift_management
         {
             _selectedUserType = userType;
             materialButtonCustomer.Type = (userType == UserType.Customer) ? MaterialButton.MaterialButtonType.Contained : MaterialButton.MaterialButtonType.Outlined;
-            materialButtonCompany.Type = (userType == UserType.Company) ? MaterialButton.MaterialButtonType.Contained : MaterialButton.MaterialButtonType.Outlined;
+            materialButtonCompany.Type = (userType == UserType.Admin) ? MaterialButton.MaterialButtonType.Contained : MaterialButton.MaterialButtonType.Outlined;
             labelUserTypeError.Visible = false;
         }
 
         private void MaterialButtonCustomer_Click(object sender, EventArgs e) => SelectUserType(UserType.Customer);
-        private void MaterialButtonCompany_Click(object sender, EventArgs e) => SelectUserType(UserType.Company);
+        private void MaterialButtonCompany_Click(object sender, EventArgs e) => SelectUserType(UserType.Admin);
 
-        private void MaterialButtonSignIn_Click(object sender, EventArgs e)
+        private async void MaterialButtonSignIn_Click(object sender, EventArgs e)
         {
+            materialButtonSignIn.Enabled = false;
+            var originalText = materialButtonSignIn.Text;
+            materialButtonSignIn.Text = "Sgining in...";
             ClearErrorStyling();
-            var loginModel = new LoginModel
+
+            try
             {
-                Email = materialTextBoxEmail.Text.Trim(),
-                Password = materialTextBoxPassword.Text,
-                UserType = _selectedUserType
-            };
-            var validationResult = _validator.Validate(loginModel);
-            if (!validationResult.IsValid)
-            {
-                foreach (var error in validationResult.Errors)
+                var loginModel = new LoginModel
                 {
-                    switch (error.PropertyName)
+                    Email = materialTextBoxEmail.Text.Trim(),
+                    Password = materialTextBoxPassword.Text,
+                    UserType = _selectedUserType
+                };
+                var validationResult = _validator.Validate(loginModel);
+                if (!validationResult.IsValid)
+                {
+                    foreach (var error in validationResult.Errors)
                     {
-                        case nameof(LoginModel.Email):
-                            labelEmailError.Text = error.ErrorMessage;
-                            labelEmailError.Visible = true;
-                            break;
-                        case nameof(LoginModel.Password):
-                            labelPasswordError.Text = error.ErrorMessage;
-                            labelPasswordError.Visible = true;
-                            break;
-                        case nameof(LoginModel.UserType):
-                            labelUserTypeError.Text = error.ErrorMessage;
-                            labelUserTypeError.Visible = true;
-                            break;
+                        switch (error.PropertyName)
+                        {
+                            case nameof(LoginModel.Email):
+                                labelEmailError.Text = error.ErrorMessage;
+                                labelEmailError.Visible = true;
+                                break;
+                            case nameof(LoginModel.Password):
+                                labelPasswordError.Text = error.ErrorMessage;
+                                labelPasswordError.Visible = true;
+                                break;
+                            case nameof(LoginModel.UserType):
+                                labelUserTypeError.Text = error.ErrorMessage;
+                                labelUserTypeError.Visible = true;
+                                break;
+                        }
                     }
+                    return;
                 }
-                return;
+                var (isSuccess, errorMessage, user) = await _authService.LoginAsync(materialTextBoxEmail.Text, materialTextBoxPassword.Text);
+                if (!isSuccess)
+                {
+                    MessageBox.Show(errorMessage ?? "Registration failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                if(user == null)
+                {
+                    MessageBox.Show("Account not found. Please check your credentials.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                if (loginModel.UserType != user.UserType)
+                {
+                    MessageBox.Show($"You are trying to log in as a {loginModel.UserType}, but your account has no permission to access ${loginModel.UserType} content.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                PerformLogin(loginModel, user);
             }
-            PerformLogin(loginModel);
+            finally 
+            {
+                materialButtonSignIn.Enabled = true;
+                materialButtonSignIn.Text = originalText;
+            }
         }
 
-        private void PerformLogin(LoginModel loginModel)
+        private void PerformLogin(LoginModel loginModel, UserModel user)
         {
             try
             {
-                if (loginModel.UserType == UserType.Company)
+                if (loginModel.UserType == UserType.Admin)
                 {
                     this.Hide();
                     new AdminDashboard().ShowDialog();
