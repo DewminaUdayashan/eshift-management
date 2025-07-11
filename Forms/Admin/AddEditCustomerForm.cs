@@ -100,7 +100,8 @@ namespace eshift_management
 
             var customer = new CustomerModel
             {
-                Id = isEditMode ? currentCustomer.Id : $"CUST-{DateTime.Now.Ticks}",
+                Id = isEditMode ? currentCustomer.Id : null,
+                UserId = isEditMode ? currentCustomer.UserId : 0,
                 FirstName = textBoxFirstName.Text.Trim(),
                 LastName = textBoxLastName.Text.Trim(),
                 Email = textBoxEmail.Text.Trim(),

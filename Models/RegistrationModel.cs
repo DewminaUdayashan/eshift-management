@@ -1,17 +1,26 @@
 ﻿using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace eshift_management.Models
 {
-    public class RegistrationModel: CustomerModel
+    /// <summary>
+    /// A model specifically for capturing data from the registration form.
+    /// </summary>
+    public class RegistrationModel
     {
+        required public string FirstName { get; set; }
+        required public string LastName { get; set; }
+        required public string Email { get; set; }
+        required public string Phone { get; set; }
+        required public string AddressLine { get; set; }
+        required public string City { get; set; }
+        required public string PostalCode { get; set; }
         required public string Password { get; set; }
         required public string ConfirmPassword { get; set; }
     }
+
+    /// <summary>
+    /// Validator for the registration model.
+    /// </summary>
     public class RegistrationValidator : AbstractValidator<RegistrationModel>
     {
         public RegistrationValidator()

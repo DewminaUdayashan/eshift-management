@@ -14,7 +14,7 @@ namespace eshift_management.Core.Repositories
         /// </summary>
         /// <param name="id">The primary key of the entity.</param>
         /// <returns>The entity, or null if not found.</returns>
-        Task<T> GetByIdAsync(int id);
+        Task<T?> GetByIdAsync(int id);
 
         /// <summary>
         /// Gets all entities, with optional filtering and sorting.
@@ -23,13 +23,13 @@ namespace eshift_management.Core.Repositories
         /// <param name="orderBy">The column name to sort by.</param>
         /// <param name="isAscending">True for ascending order, false for descending.</param>
         /// <returns>A collection of entities.</returns>
-        Task<IEnumerable<T>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true);
+        Task<IEnumerable<T>> GetAllAsync(Dictionary<string, object>? filter = null, string? orderBy = null, bool isAscending = true);
 
         /// <summary>
         /// Adds a new entity to the database.
         /// </summary>
         /// <param name="entity">The entity to add.</param>
-        Task AddAsync(T entity);
+        Task<int> AddAsync(T entity);
 
         /// <summary>
         /// Updates an existing entity in the database.

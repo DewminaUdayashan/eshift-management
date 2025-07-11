@@ -2,5 +2,5 @@
 {
     None,
     Customer,
-    Company
+    Admin
 }

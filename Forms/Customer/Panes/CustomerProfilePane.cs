@@ -43,7 +43,7 @@ namespace eshift_management.Panes
             // This data would be fetched from your database based on the logged-in user's ID
             loggedInCustomer = new CustomerModel
             {
-                Id = "CUST-001",
+                UserId = 0,
                 FirstName = "John",
                 LastName = "Smith",
                 Email = "john.s@example.com",
@@ -82,6 +82,7 @@ namespace eshift_management.Panes
             var updatedCustomer = new CustomerModel
             {
                 Id = loggedInCustomer.Id,
+                UserId = 0,
                 Email = loggedInCustomer.Email, // Email doesn't change
                 FirstName = textBoxFirstName.Text.Trim(),
                 LastName = textBoxLastName.Text.Trim(),
