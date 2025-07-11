@@ -23,6 +23,7 @@ namespace eshift_management.Forms
         private List<Label> errorLabels;
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly ICustomerService _customerService;
         private UserModel _registeredUser; // Store the user returned from registration
 
 
@@ -34,8 +35,9 @@ namespace eshift_management.Forms
             InitializeComponent();
             InitializeErrorLabels();
             pictureBoxLogo.Image = Properties.Resources.e_shift_logo;
-            _authService = new AuthService(new UserRepository(), new CustomerRepository(), new EmailService());
             _userService = new UserService(new UserRepository());
+            _customerService = new CustomerService(new CustomerRepository());
+            _authService = new AuthService(_userService, _customerService, new EmailService());
         }
 
         /// <summary>
