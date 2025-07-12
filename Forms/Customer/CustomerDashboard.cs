@@ -1,4 +1,5 @@
-﻿using eshift_management.Panes;
+﻿using eshift_management.Models;
+using eshift_management.Panes;
 using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
@@ -10,13 +11,14 @@ namespace eshift_management
 {
     public partial class CustomerDashboard : MaterialForm
     {
-        private Button currentButton;
+        private UserModel user;
+        private Button? currentButton;
         private readonly MaterialSkinManager materialSkinManager;
 
-        public CustomerDashboard()
+        public CustomerDashboard(UserModel user)
         {
             InitializeComponent();
-
+            this.user = user;
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
@@ -89,7 +91,7 @@ namespace eshift_management
         private void buttonProfile_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            ShowPane(new CustomerProfilePane());
+            ShowPane(new CustomerProfilePane(user));
         }
     }
 }

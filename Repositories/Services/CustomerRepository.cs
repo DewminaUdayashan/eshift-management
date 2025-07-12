@@ -2,6 +2,7 @@
 using eshift_management.Models;
 using eshift_management.Repositories.Interfaces;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace eshift_management.Repositories.Services
@@ -11,39 +12,92 @@ namespace eshift_management.Repositories.Services
     /// </summary>
     public class CustomerRepository : ICustomerRepository
     {
-        /// <summary>
-        /// Adds a new customer record to the database.
-        /// </summary>
-        /// <param name="entity">The customer entity to add.</param>
+        /// <inheritdoc />
         public async Task<int> AddAsync(CustomerModel entity)
         {
             var sql = @"
-                INSERT INTO customers (user_id, first_name, last_name, phone_number, address_line, city, postal_code)
-                VALUES (@UserId, @FirstName, @LastName, @Phone, @AddressLine, @City, @PostalCode);";
-          return await DbExecutor.ExecuteScalarAsync<int>(sql, entity);
+                INSERT INTO customers 
+                    (user_id, first_name, last_name, phone_number, address_line, city, postal_code)
+                VALUES 
+                    (@UserId, @FirstName, @LastName, @Phone, @AddressLine, @City, @PostalCode);";
+
+            return await DbExecutor.ExecuteScalarAsync<int>(sql, entity);
         }
 
-        // The methods below are inherited from IRepository and are not yet implemented.
-        // They can be built out as needed using the DbExecutor, similar to the UserRepository.
-
-        public Task DeleteAsync(int id)
+        /// <inheritdoc />
+        public async Task DeleteAsync(int id)
         {
-            throw new System.NotImplementedException();
+            var sql = "DELETE FROM customers WHERE user_id = @UserId;";
+            await DbExecutor.ExecuteAsync(sql, new { UserId = id });
         }
 
-        public Task<IEnumerable<CustomerModel>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true)
+        /// <inheritdoc />
+        public async Task<IEnumerable<CustomerModel>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true)
         {
-            throw new System.NotImplementedException();
+            var sqlBuilder = new StringBuilder(@"
+                SELECT 
+                    user_id AS UserId,
+                    first_name AS FirstName,
+                    last_name AS LastName,
+                    phone_number AS Phone,
+                    address_line AS AddressLine,
+                    city AS City,
+                    postal_code AS PostalCode
+                FROM customers");
+
+            if (filter != null && filter.Count > 0)
+            {
+                sqlBuilder.Append(" WHERE ");
+                var conditions = new List<string>();
+                foreach (var key in filter.Keys)
+                {
+                    conditions.Add($"{key} = @{key}");
+                }
+                sqlBuilder.Append(string.Join(" AND ", conditions));
+            }
+
+            if (!string.IsNullOrWhiteSpace(orderBy))
+            {
+                sqlBuilder.Append($" ORDER BY {orderBy} {(isAscending ? "ASC" : "DESC")}");
+            }
+
+            sqlBuilder.Append(';');
+
+            return await DbExecutor.QueryAsync<CustomerModel>(sqlBuilder.ToString(), filter);
         }
 
-        public Task<CustomerModel?> GetByIdAsync(int id)
+        /// <inheritdoc />
+        public async Task<CustomerModel?> GetByIdAsync(int id)
         {
-            throw new System.NotImplementedException();
+            var sql = @"
+                SELECT 
+                    user_id AS UserId,
+                    first_name AS FirstName,
+                    last_name AS LastName,
+                    phone_number AS Phone,
+                    address_line AS AddressLine,
+                    city AS City,
+                    postal_code AS PostalCode
+                FROM customers
+                WHERE user_id = @UserId;";
+
+            return await DbExecutor.QueryFirstOrDefaultAsync<CustomerModel>(sql, new { UserId = id });
         }
 
-        public Task UpdateAsync(CustomerModel entity)
+        /// <inheritdoc />
+        public async Task UpdateAsync(CustomerModel entity)
         {
-            throw new System.NotImplementedException();
+            var sql = @"
+                UPDATE customers SET 
+                    first_name = @FirstName,
+                    last_name = @LastName,
+                    phone_number = @Phone,
+                    address_line = @AddressLine,
+                    city = @City,
+                    postal_code = @PostalCode
+                WHERE user_id = @UserId;";
+
+            await DbExecutor.ExecuteAsync(sql, entity);
         }
     }
 }

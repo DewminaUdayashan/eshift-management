@@ -28,7 +28,9 @@ namespace eshift_management.Models
             RuleFor(c => c.FirstName).NotEmpty().WithMessage("First name is required.");
             RuleFor(c => c.LastName).NotEmpty().WithMessage("Last name is required.");
             RuleFor(c => c.Email).NotEmpty().EmailAddress().WithMessage("A valid email is required.");
-            RuleFor(c => c.Phone).NotEmpty().WithMessage("Phone number is required.");
+            RuleFor(c => c.Phone)
+                   .NotEmpty().WithMessage("Phone number is required.")
+                   .Matches(@"^\d{10}$").WithMessage("A valid phone number is required.");
             RuleFor(c => c.AddressLine).NotEmpty().WithMessage("Address is required.");
             RuleFor(c => c.City).NotEmpty().WithMessage("City is required.");
             RuleFor(c => c.PostalCode).NotEmpty().WithMessage("Postal code is required.");

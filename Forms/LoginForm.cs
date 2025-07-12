@@ -149,7 +149,7 @@ namespace eshift_management
                 else if (loginModel.UserType == UserType.Customer)
                 {
                     this.Hide();
-                    new CustomerDashboard().ShowDialog();
+                    new CustomerDashboard(user).ShowDialog();
                     this.Close();
                 }
             }
