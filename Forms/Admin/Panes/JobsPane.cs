@@ -76,12 +76,12 @@ namespace eshift_management.Panes
             var cust3 = new CustomerModel { Id = 3, UserId = 0, FirstName = "Peter", LastName = "Jones", Email = "p.j@mail.com", Phone = "333", AddressLine = "3", City = "3", PostalCode = "3" };
             var cust4 = new CustomerModel { Id = 4, UserId = 0, FirstName = "Mary", LastName = "Johnson", Email = "m.j@mail.com", Phone = "444", AddressLine = "4", City = "4", PostalCode = "4" };
 
-            var truck1 = new Truck { Id = "TRK-01", Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available };
-            var truck2 = new Truck { Id = "TRK-02", Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned };
-            var driver1 = new Employee { Id = "EMP-01", FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, ContactNumber = "071-1112222", LicenseNumber = "B123456", Status = ResourceStatus.Assigned };
-            var driver2 = new Employee { Id = "EMP-02", FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, ContactNumber = "077-2223333", LicenseNumber = "B789012", Status = ResourceStatus.Available };
-            var assistant1 = new Employee { Id = "EMP-03", FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned };
-            var assistant2 = new Employee { Id = "EMP-04", FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available };
+            var truck1 = new Truck { Id = 1, Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available };
+            var truck2 = new Truck { Id = 2, Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned };
+            var driver1 = new Employee { Id = 3, FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, ContactNumber = "071-1112222", LicenseNumber = "B123456", Status = ResourceStatus.Assigned };
+            var driver2 = new Employee { Id = 4, FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, ContactNumber = "077-2223333", LicenseNumber = "B789012", Status = ResourceStatus.Available };
+            var assistant1 = new Employee { Id = 5, FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned };
+            var assistant2 = new Employee { Id = 6, FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available };
 
             var assignedUnit = new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = truck2, Driver = driver1, Assistant = assistant1, Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" };
             var availableUnit = new TransportUnit { Id = 2, UnitName = "Team Bravo", Truck = truck1, Driver = driver2, Assistant = assistant2, Status = ResourceStatus.Available, AssignedJobId = "" };

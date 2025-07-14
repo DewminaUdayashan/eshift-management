@@ -63,7 +63,7 @@ namespace eshift_management
 
             var truck = new Truck
             {
-                Id = isEditMode ? currentTruck.Id : $"TRK-{DateTime.Now.Ticks}",
+                Id = isEditMode ? currentTruck.Id : 0,
                 Model = textBoxModel.Text.Trim(),
                 LicensePlate = textBoxLicensePlate.Text.Trim(),
                 // Set status automatically: new trucks are 'Available', edited trucks keep their existing status.

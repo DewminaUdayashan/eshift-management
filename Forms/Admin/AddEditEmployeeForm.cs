@@ -79,7 +79,7 @@ namespace eshift_management
 
             var employee = new Employee
             {
-                Id = isEditMode ? currentEmployee.Id : $"EMP-{DateTime.Now.Ticks}",
+                Id = isEditMode ? currentEmployee.Id : 0,
                 FirstName = textBoxFirstName.Text.Trim(),
                 LastName = textBoxLastName.Text.Trim(),
                 Position = (EmployeePosition)comboBoxPosition.SelectedItem,

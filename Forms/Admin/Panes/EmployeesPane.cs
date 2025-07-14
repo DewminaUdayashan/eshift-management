@@ -2,12 +2,6 @@
 using eshift_management.Models;
 using eshift_management.Repositories;
 using eshift_management.Services;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace eshift_management.Panes
 {
@@ -19,7 +13,7 @@ namespace eshift_management.Panes
         public EmployeesPane()
         {
             InitializeComponent();
-            // In a real application with Dependency Injection, these would be injected.
+
             _employeeService = new EmployeeService(new EmployeeRepository());
 
             SetupDataGridView();

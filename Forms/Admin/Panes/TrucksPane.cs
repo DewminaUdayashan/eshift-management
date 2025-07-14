@@ -20,7 +20,6 @@ namespace eshift_management.Panes
         {
             InitializeComponent();
 
-            // In a real application with Dependency Injection, this would be injected.
             _truckService = new TruckService(new TruckRepository());
 
             SetupDataGridView();
