@@ -1,23 +1,62 @@
-﻿using eshift_management.Models;
+﻿using eshift_management.Core.Services;
+using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Services;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace eshift_management.Panes
 {
     public partial class EmployeesPane : UserControl
     {
-        private List<Employee> allEmployees;
+        private readonly IEmployeeService _employeeService;
         private bool isSortAscending = true;
 
         public EmployeesPane()
         {
             InitializeComponent();
+            // In a real application with Dependency Injection, these would be injected.
+            _employeeService = new EmployeeService(new EmployeeRepository());
+
             SetupDataGridView();
             SetupSorting();
-            LoadDummyData();
+
+            // Load initial data when the pane is created.
+            _ = LoadEmployeesAsync();
+        }
+
+        private async Task LoadEmployeesAsync()
+        {
+            try
+            {
+                // Construct the filter dictionary based on UI controls.
+                var filter = new Dictionary<string, object>();
+                string? searchTerm = textBoxSearch.Text.Trim();
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    filter.Add("SearchTerm", searchTerm);
+                }
+
+                // Map the UI sort option to the property name for the service.
+                string sortBy = comboBoxSortBy.SelectedItem.ToString();
+                string orderByProperty = sortBy switch
+                {
+                    "Name" => "Name",
+                    "Position" => "Position",
+                    _ => "Id" // Default to "Employee ID"
+                };
+
+                var employees = await _employeeService.GetAllEmployeesAsync(filter, orderByProperty, isSortAscending);
+                dataGridViewEmployees.DataSource = employees.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load employees: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void SetupDataGridView()
@@ -30,6 +69,7 @@ namespace eshift_management.Panes
             AddGridColumn("ContactNumber", "Contact No.");
             AddGridColumn("LicenseNumber", "License No.");
             AddGridColumn("Status", "Status");
+
             var editButtonColumn = new DataGridViewButtonColumn
             {
                 Name = "Edit",
@@ -65,96 +105,66 @@ namespace eshift_management.Panes
             comboBoxSortBy.SelectedIndex = 0;
         }
 
-        private void LoadDummyData()
-        {
-            allEmployees = new List<Employee>
-            {
-                new Employee { Id = "EMP-01", FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, ContactNumber="071-1112222", LicenseNumber = "B123456", Status = ResourceStatus.Assigned },
-                new Employee { Id = "EMP-02", FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, ContactNumber="077-2223333", LicenseNumber = "B789012", Status = ResourceStatus.Available },
-                new Employee { Id = "EMP-03", FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned },
-                new Employee { Id = "EMP-04", FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available }
-            };
-            UpdateGridDisplay();
-        }
-
-        private void UpdateGridDisplay()
-        {
-            if (allEmployees == null) return;
-            IEnumerable<Employee> processedData = allEmployees;
-            string searchText = textBoxSearch.Text.ToLower().Trim();
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                processedData = processedData.Where(e =>
-                    e.Id.ToLower().Contains(searchText) ||
-                    e.FullName.ToLower().Contains(searchText) ||
-                    e.ContactNumber.Contains(searchText)
-                ).ToList();
-            }
-            string sortBy = comboBoxSortBy.SelectedItem.ToString();
-            switch (sortBy)
-            {
-                case "Name":
-                    processedData = isSortAscending ? processedData.OrderBy(e => e.FullName) : processedData.OrderByDescending(e => e.FullName);
-                    break;
-                case "Position":
-                    processedData = isSortAscending ? processedData.OrderBy(e => e.Position) : processedData.OrderByDescending(e => e.Position);
-                    break;
-                default:
-                    processedData = isSortAscending ? processedData.OrderBy(e => e.Id) : processedData.OrderByDescending(e => e.Id);
-                    break;
-            }
-            dataGridViewEmployees.DataSource = processedData.ToList();
-        }
-
-        private void Sort_Changed(object sender, EventArgs e)
-        {
-            UpdateGridDisplay();
-        }
-
-        private void buttonSortOrder_Click(object sender, EventArgs e)
-        {
-            isSortAscending = !isSortAscending;
-            buttonSortOrder.Text = isSortAscending ? "ASC" : "DESC";
-            UpdateGridDisplay();
-        }
-
-        private void buttonAddNew_Click(object sender, EventArgs e)
+        private async void buttonAddNew_Click(object sender, EventArgs e)
         {
             using (var form = new AddEditEmployeeForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    allEmployees.Add(form.TheEmployee);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Employee successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    try
+                    {
+                        await _employeeService.CreateEmployeeAsync(form.TheEmployee);
+                        await LoadEmployeesAsync(); // Refresh data from the database
+                        MessageBox.Show("Employee successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to add employee: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
-        private void dataGridViewEmployees_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dataGridViewEmployees_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dataGridViewEmployees.Columns[e.ColumnIndex].Name != "Edit")
                 return;
 
-            string employeeId = dataGridViewEmployees.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-            var employeeToEdit = allEmployees.FirstOrDefault(emp => emp.Id == employeeId);
-
-            if (employeeToEdit != null)
+            if (dataGridViewEmployees.Rows[e.RowIndex].DataBoundItem is Employee employeeToEdit)
             {
                 using (var form = new AddEditEmployeeForm(employeeToEdit))
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        int index = allEmployees.FindIndex(emp => emp.Id == employeeId);
-                        if (index != -1)
+                        try
                         {
-                            allEmployees[index] = form.TheEmployee;
+                            await _employeeService.UpdateEmployeeAsync(form.TheEmployee);
+                            await LoadEmployeesAsync(); // Refresh data
+                            MessageBox.Show("Employee successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        UpdateGridDisplay();
-                        MessageBox.Show("Employee successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to update employee: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// This method handles events from sorting and searching controls to refresh the data grid.
+        /// </summary>
+        private async void Sort_Changed(object sender, EventArgs e)
+        {
+            // A debounce timer would be ideal here to prevent excessive queries, especially for the search box.
+            await LoadEmployeesAsync();
+        }
+
+        private async void buttonSortOrder_Click(object sender, EventArgs e)
+        {
+            isSortAscending = !isSortAscending;
+            buttonSortOrder.Text = isSortAscending ? "ASC" : "DESC";
+            await LoadEmployeesAsync();
         }
     }
 }
