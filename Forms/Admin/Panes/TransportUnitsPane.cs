@@ -92,8 +92,8 @@ namespace eshift_management.Panes
 
             allUnits = new List<TransportUnit>
             {
-                new TransportUnit { Id = "UNIT-01", UnitName = "Team Alpha", Truck = allTrucks[1], Driver = allEmployees[0], Assistant = allEmployees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-101" },
-                new TransportUnit { Id = "UNIT-02", UnitName = "Team Bravo", Truck = allTrucks[0], Driver = allEmployees[1], Assistant = allEmployees[3], Status = ResourceStatus.Available, AssignedJobId = "" }
+                new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = allTrucks[1], Driver = allEmployees[0], Assistant = allEmployees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-101" },
+                new TransportUnit { Id = 2, UnitName = "Team Bravo", Truck = allTrucks[0], Driver = allEmployees[1], Assistant = allEmployees[3], Status = ResourceStatus.Available, AssignedJobId = "" }
             };
 
             UpdateGridDisplay();

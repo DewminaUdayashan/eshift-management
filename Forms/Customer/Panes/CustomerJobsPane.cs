@@ -1,24 +1,43 @@
-﻿using eshift_management.Forms; // Add this using directive
+﻿using eshift_management.Core.Services;
+using eshift_management.Forms;
 using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Repositories.Services;
+using eshift_management.Services;
+using eshift_management.Services.Implementations;
+using eshift_management.Services.Interfaces;
 using eshift_management.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace eshift_management.Panes
 {
     public partial class CustomerJobsPane : UserControl
     {
+        private readonly IJobService _jobService;
+        private readonly ICustomerService _customerService;
         private List<Job> allJobs;
-        private Job selectedJob;
-        private CustomerModel loggedInCustomer;
+        private Job? selectedJob;
+        private UserModel user;
+        private CustomerModel customer;
 
-        public CustomerJobsPane()
+        public CustomerJobsPane(UserModel user)
         {
             InitializeComponent();
-            LoadDummyData();
+            _jobService = new JobService(new JobRepository());
+            _customerService = new CustomerService(new CustomerRepository());
+            this.user = user;
             SetupGrid();
+            LoadAndDisplayJobsAsync();
+            LoadCustomerAsync();
+        }
+
+        private async Task LoadCustomerAsync()
+        {
+            customer = await _customerService.GetByIdAsync(user.Id ?? 0);
+        }
+
+        private async Task LoadAndDisplayJobsAsync()
+        {
+            allJobs = (await _jobService.GetJobsByCustomerAsync(user.Id??0)).ToList();
             UpdateGridDisplay();
             DisplayJobDetails(null);
         }
@@ -27,57 +46,48 @@ namespace eshift_management.Panes
         {
             if (selectedJob == null) return;
 
-            using (var form = new PlaceJobForm(loggedInCustomer, selectedJob))
+            using (var form = new PlaceJobForm(customer, selectedJob!))
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    var originalJob = allJobs.FirstOrDefault(j => j.Id == selectedJob.Id);
-                    if (originalJob != null)
-                    {
-                        originalJob.PickupLocation = form.TheJob.PickupLocation;
-                        originalJob.DropoffLocation = form.TheJob.DropoffLocation;
-                        originalJob.PickupDate = form.TheJob.PickupDate;
-                        originalJob.LoadSize = form.TheJob.LoadSize;
-                        originalJob.Description = form.TheJob.Description;
-                    }
-                    UpdateGridDisplay();
-                    MessageBox.Show("Your job has been updated.", "Job Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _ = UpdateJobAsync(form.TheJob);
                 }
             }
+        }
+
+        private async Task UpdateJobAsync(Job updatedJob)
+        {
+            await _jobService.UpdateJobAsync(updatedJob);
+            await LoadAndDisplayJobsAsync();
+            MessageBox.Show("Your job has been updated.", "Job Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void buttonAddNewJob_Click(object sender, EventArgs e)
+        {
+            using (var form = new PlaceJobForm(customer))
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    _ = AddNewJobAsync(form.TheJob);
+                }
+            }
+        }
+
+        private async Task AddNewJobAsync(Job newJob)
+        {
+            await _jobService.CreateJobAsync(newJob);
+            await LoadAndDisplayJobsAsync();
+            MessageBox.Show("Your job has been submitted for review.", "Job Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void buttonViewInvoice_Click(object sender, EventArgs e)
         {
             if (selectedJob == null || selectedJob.Status != JobStatus.Completed) return;
 
-            // Open the new invoice viewer form
             using (var form = new InvoiceViewerForm(selectedJob))
             {
                 form.ShowDialog();
             }
-        }
-
-        #region Unchanged Methods
-        private void LoadDummyData()
-        {
-            loggedInCustomer = new CustomerModel
-            {
-                UserId = 0,
-                FirstName = "John",
-                LastName = "Smith",
-                Email = "john.s@example.com",
-                Phone = "077-1234567",
-                AddressLine = "123 Galle Rd",
-                City = "Panadura",
-                PostalCode = "12500"
-            };
-
-            allJobs = new List<Job>
-            {
-                new Job { Id = "JOB-001", Customer = loggedInCustomer, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), Status = JobStatus.Pending, LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", TotalCost = 0, EstimatedHours = 0, RejectionReason = "", AssignedUnit = null },
-                new Job { Id = "JOB-005", Customer = loggedInCustomer, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), Status = JobStatus.Completed, TotalCost = 35000, LoadSize = "Small (1-2 rooms)", Description = "Everything went smoothly.", EstimatedHours = 7, RejectionReason = "", AssignedUnit = null },
-                new Job { Id = "JOB-007", Customer = loggedInCustomer, PickupLocation = "Gampaha", DropoffLocation = "Matara", PickupDate = DateTime.Now.AddDays(20), Status = JobStatus.Approved, LoadSize = "Large (5+ rooms)", Description = "Awaiting unit assignment.", TotalCost = 95000, EstimatedHours = 14, RejectionReason = "", AssignedUnit = null },
-            };
         }
 
         private void SetupGrid()
@@ -92,18 +102,6 @@ namespace eshift_management.Panes
             AddGridColumn("DropoffLocation", "To");
         }
 
-        private void buttonAddNewJob_Click(object sender, EventArgs e)
-        {
-            using (var form = new PlaceJobForm(loggedInCustomer))
-            {
-                if (form.ShowDialog() == DialogResult.OK)
-                {
-                    allJobs.Add(form.TheJob);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Your job has been submitted for review.", "Job Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-        }
         private void AddGridColumn(string dataPropertyName, string headerText)
         {
             var column = new DataGridViewTextBoxColumn
@@ -173,7 +171,7 @@ namespace eshift_management.Panes
             if (dataGridViewJobs.SelectedRows.Count > 0)
             {
                 string jobId = dataGridViewJobs.SelectedRows[0].Cells["Id"].Value.ToString();
-                var job = allJobs.FirstOrDefault(j => j.Id == jobId);
+                var job = allJobs.FirstOrDefault(j => j.Id.ToString() == jobId);
                 DisplayJobDetails(job);
             }
             else
@@ -181,6 +179,5 @@ namespace eshift_management.Panes
                 DisplayJobDetails(null);
             }
         }
-        #endregion
     }
 }

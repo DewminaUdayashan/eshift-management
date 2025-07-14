@@ -62,15 +62,15 @@ namespace eshift_management.Panes
             // Transport Units
             _units = new List<TransportUnit>
             {
-                new TransportUnit { Id = "UNIT-01", UnitName = "Team Alpha", Truck = _trucks[1], Driver = _employees[0], Assistant = _employees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" }
+                new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = _trucks[1], Driver = _employees[0], Assistant = _employees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" }
             };
 
             // Jobs
             _jobs = new List<Job>
             {
-                 new Job { Id = "JOB-003", Status = JobStatus.Scheduled, PickupDate = DateTime.Now.AddDays(2), Customer = _customers[1], AssignedUnit = _units[0], PickupLocation = "Negombo", DropoffLocation = "Trincomalee", LoadSize="Small", Description="Desc", RejectionReason="", TotalCost=40000, EstimatedHours=8 },
-                 new Job { Id = "JOB-004", Status = JobStatus.OnGoing, PickupDate = DateTime.Now, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Matara", DropoffLocation = "Batticaloa", LoadSize="Medium", Description="Desc", RejectionReason="", TotalCost=60000, EstimatedHours=10 },
-                 new Job { Id = "JOB-005", Status = JobStatus.Completed, PickupDate = DateTime.Now.AddDays(-10), TotalCost = 35000, EstimatedHours = 7, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", LoadSize="Small", Description="Desc", RejectionReason=""}
+                 new Job { Id =1, Status = JobStatus.Scheduled, PickupDate = DateTime.Now.AddDays(2), Customer = _customers[1], AssignedUnit = _units[0], PickupLocation = "Negombo", DropoffLocation = "Trincomalee", LoadSize="Small", Description="Desc", RejectionReason="", TotalCost=40000, EstimatedHours=8 },
+                 new Job { Id = 2, Status = JobStatus.OnGoing, PickupDate = DateTime.Now, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Matara", DropoffLocation = "Batticaloa", LoadSize="Medium", Description="Desc", RejectionReason="", TotalCost=60000, EstimatedHours=10 },
+                 new Job { Id = 3, Status = JobStatus.Completed, PickupDate = DateTime.Now.AddDays(-10), TotalCost = 35000, EstimatedHours = 7, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", LoadSize="Small", Description="Desc", RejectionReason=""}
             };
         }
 

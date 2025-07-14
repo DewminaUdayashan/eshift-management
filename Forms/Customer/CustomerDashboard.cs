@@ -41,7 +41,7 @@ namespace eshift_management
             }
 
             ActivateButton(buttonMyJobs);
-            ShowPane(new CustomerJobsPane());
+            ShowPane(new CustomerJobsPane(user));
         }
 
         private void ActivateButton(object senderBtn)
@@ -80,7 +80,7 @@ namespace eshift_management
         private void buttonMyJobs_Click(object sender, EventArgs e)
         {
             ActivateButton(sender);
-            ShowPane(new CustomerJobsPane());
+            ShowPane(new CustomerJobsPane(user));
         }
 
         private void buttonPlaceJob_Click(object sender, EventArgs e)

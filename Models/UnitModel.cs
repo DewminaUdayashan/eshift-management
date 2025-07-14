@@ -4,7 +4,7 @@ namespace eshift_management.Models
 {
     public class TransportUnit
     {
-        required public string Id { get; set; }
+        required public int Id { get; set; }
         required public string UnitName { get; set; }
         required public Truck Truck { get; set; }
         required public Employee Driver { get; set; }

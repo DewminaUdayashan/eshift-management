@@ -58,7 +58,7 @@ namespace eshift_management.Panes
 
                 // Get the Job object for the current row
                 var jobId = dataGridViewJobs.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-                var job = allJobs.FirstOrDefault(j => j.Id == jobId);
+                var job = allJobs.FirstOrDefault(j => j.Id.ToString() == jobId);
 
                 if (job != null)
                 {
@@ -83,19 +83,19 @@ namespace eshift_management.Panes
             var assistant1 = new Employee { Id = "EMP-03", FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned };
             var assistant2 = new Employee { Id = "EMP-04", FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available };
 
-            var assignedUnit = new TransportUnit { Id = "UNIT-01", UnitName = "Team Alpha", Truck = truck2, Driver = driver1, Assistant = assistant1, Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" };
-            var availableUnit = new TransportUnit { Id = "UNIT-02", UnitName = "Team Bravo", Truck = truck1, Driver = driver2, Assistant = assistant2, Status = ResourceStatus.Available, AssignedJobId = "" };
+            var assignedUnit = new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = truck2, Driver = driver1, Assistant = assistant1, Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" };
+            var availableUnit = new TransportUnit { Id = 2, UnitName = "Team Bravo", Truck = truck1, Driver = driver2, Assistant = assistant2, Status = ResourceStatus.Available, AssignedJobId = "" };
 
             allUnits = new List<TransportUnit> { assignedUnit, availableUnit };
 
             allJobs = new List<Job>
             {
-                 new Job { Id = "JOB-001", Customer = cust1, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", Status = JobStatus.Pending, AssignedUnit = null, TotalCost=0, EstimatedHours=0, RejectionReason="" },
-                 new Job { Id = "JOB-002", Customer = cust2, PickupLocation = "Galle", DropoffLocation = "Jaffna", PickupDate = DateTime.Now.AddDays(10), LoadSize = "Large (5+ rooms)", Description = "Requires piano transport.", Status = JobStatus.Approved, TotalCost = 75000, EstimatedHours = 12, AssignedUnit=null, RejectionReason=""},
-                 new Job { Id = "JOB-003", Customer = cust3, PickupLocation = "Negombo", DropoffLocation = "Trincomalee", PickupDate = DateTime.Now.AddDays(2), LoadSize = "Small (1-2 rooms)", Description = "Studio apartment move.", Status = JobStatus.Scheduled, AssignedUnit = assignedUnit, TotalCost = 40000, EstimatedHours = 8, RejectionReason=""},
-                 new Job { Id = "JOB-004", Customer = cust4, PickupLocation = "Matara", DropoffLocation = "Batticaloa", PickupDate = DateTime.Now, LoadSize = "Medium (3-4 rooms)", Description = "", Status = JobStatus.OnGoing, AssignedUnit = assignedUnit, TotalCost = 60000, EstimatedHours = 10, RejectionReason=""},
-                 new Job { Id = "JOB-005", Customer = cust1, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), LoadSize = "Small (1-2 rooms)", Description = "Completed job.", Status = JobStatus.Completed, AssignedUnit = assignedUnit, TotalCost = 35000, EstimatedHours = 7, RejectionReason=""},
-                 new Job { Id = "JOB-006", Customer = cust2, PickupLocation = "Ratnapura", DropoffLocation = "Galle", PickupDate = DateTime.Now.AddDays(8), LoadSize = "Large (5+ rooms)", Description = "Canceled by admin.", Status = JobStatus.Canceled, TotalCost = 0, EstimatedHours = 0, AssignedUnit=null, RejectionReason=""},
+                 new Job { Id = 1, Customer = cust1, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", Status = JobStatus.Pending, AssignedUnit = null, TotalCost=0, EstimatedHours=0, RejectionReason="" },
+                 new Job { Id = 2, Customer = cust2, PickupLocation = "Galle", DropoffLocation = "Jaffna", PickupDate = DateTime.Now.AddDays(10), LoadSize = "Large (5+ rooms)", Description = "Requires piano transport.", Status = JobStatus.Approved, TotalCost = 75000, EstimatedHours = 12, AssignedUnit=null, RejectionReason=""},
+                 new Job { Id = 3, Customer = cust3, PickupLocation = "Negombo", DropoffLocation = "Trincomalee", PickupDate = DateTime.Now.AddDays(2), LoadSize = "Small (1-2 rooms)", Description = "Studio apartment move.", Status = JobStatus.Scheduled, AssignedUnit = assignedUnit, TotalCost = 40000, EstimatedHours = 8, RejectionReason=""},
+                 new Job { Id = 4, Customer = cust4, PickupLocation = "Matara", DropoffLocation = "Batticaloa", PickupDate = DateTime.Now, LoadSize = "Medium (3-4 rooms)", Description = "", Status = JobStatus.OnGoing, AssignedUnit = assignedUnit, TotalCost = 60000, EstimatedHours = 10, RejectionReason=""},
+                 new Job { Id = 5, Customer = cust1, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), LoadSize = "Small (1-2 rooms)", Description = "Completed job.", Status = JobStatus.Completed, AssignedUnit = assignedUnit, TotalCost = 35000, EstimatedHours = 7, RejectionReason=""},
+                 new Job { Id = 6, Customer = cust2, PickupLocation = "Ratnapura", DropoffLocation = "Galle", PickupDate = DateTime.Now.AddDays(8), LoadSize = "Large (5+ rooms)", Description = "Canceled by admin.", Status = JobStatus.Canceled, TotalCost = 0, EstimatedHours = 0, AssignedUnit=null, RejectionReason=""},
             };
         }
 
@@ -182,7 +182,7 @@ namespace eshift_management.Panes
             if (dataGridViewJobs.SelectedRows.Count > 0)
             {
                 var jobId = dataGridViewJobs.SelectedRows[0].Cells["Id"].Value.ToString();
-                var job = allJobs.FirstOrDefault(j => j.Id == jobId);
+                var job = allJobs.FirstOrDefault(j => j.Id.ToString() == jobId);
                 DisplayJobDetails(job);
             }
             else

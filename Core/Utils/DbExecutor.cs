@@ -24,6 +24,30 @@ namespace eshift_management.Data
         }
 
         /// <summary>
+        /// Executes a multi-mapping query that joins multiple tables and returns a collection of results.
+        /// </summary>
+        /// <typeparam name="TFirst">The first type in the result set.</typeparam>
+        /// <typeparam name="TSecond">The second type in the result set.</typeparam>
+        /// <typeparam name="TThird">The third type in the result set.</typeparam>
+        /// <typeparam name="TReturn">The return type of the mapping function.</typeparam>
+        /// <param name="sql">The SQL query to execute.</param>
+        /// <param name="map">The function to map row types to a single return type.</param>
+        /// <param name="parameters">Optional query parameters.</param>
+        /// <param name="splitOn">A comma-separated string that tells Dapper when the next object begins.</param>
+        /// <returns>A collection of mapped objects.</returns>
+        public static async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TThird, TReturn>(
+            string sql,
+            Func<TFirst, TSecond, TThird, TReturn> map,
+            object? parameters = null,
+            string splitOn = "Id")
+        {
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                return await connection.QueryAsync(sql, map, parameters, splitOn: splitOn);
+            }
+        }
+
+        /// <summary>
         /// Executes a query that returns a single record or a default value (null for reference types).
         /// </summary>
         public static async Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? parameters = null)
