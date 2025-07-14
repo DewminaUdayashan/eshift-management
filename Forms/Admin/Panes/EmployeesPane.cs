@@ -107,14 +107,19 @@ namespace eshift_management.Panes
 
         private async void buttonAddNew_Click(object sender, EventArgs e)
         {
+            // The 'using' statement ensures the form is disposed of correctly.
             using (var form = new AddEditEmployeeForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
                     try
                     {
+                        // Call the service to create the new employee.
                         await _employeeService.CreateEmployeeAsync(form.TheEmployee);
-                        await LoadEmployeesAsync(); // Refresh data from the database
+
+                        // Refresh the grid to show the new data.
+                        await LoadEmployeesAsync();
+
                         MessageBox.Show("Employee successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
