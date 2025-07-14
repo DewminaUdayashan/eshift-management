@@ -1,23 +1,63 @@
-﻿using eshift_management.Models;
+﻿using eshift_management.Core.Services;
+using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Services;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace eshift_management.Panes
 {
     public partial class TrucksPane : UserControl
     {
-        private List<Truck> allTrucks;
+        private readonly ITruckService _truckService;
         private bool isSortAscending = true;
 
         public TrucksPane()
         {
             InitializeComponent();
+
+            // In a real application with Dependency Injection, this would be injected.
+            _truckService = new TruckService(new TruckRepository());
+
             SetupDataGridView();
             SetupSorting();
-            LoadDummyData();
+
+            // Asynchronously load the initial truck data.
+            _ = LoadTrucksAsync();
+        }
+
+        private async Task LoadTrucksAsync()
+        {
+            try
+            {
+                // Construct the filter dictionary from UI controls.
+                var filter = new Dictionary<string, object>();
+                string? searchTerm = textBoxSearch.Text.Trim();
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    filter.Add("SearchTerm", searchTerm);
+                }
+
+                // Map the UI sort option to the property name for the service.
+                string sortBy = comboBoxSortBy.SelectedItem.ToString();
+                string orderByProperty = sortBy switch
+                {
+                    "Model" => "Model",
+                    "Status" => "Status",
+                    _ => "Id" // Default to "Truck ID"
+                };
+
+                var trucks = await _truckService.GetAllTrucksAsync(filter, orderByProperty, isSortAscending);
+                dataGridViewTrucks.DataSource = trucks.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load trucks: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void SetupDataGridView()
@@ -63,96 +103,62 @@ namespace eshift_management.Panes
             comboBoxSortBy.SelectedIndex = 0;
         }
 
-        private void LoadDummyData()
-        {
-            allTrucks = new List<Truck>
-            {
-                new Truck { Id = "TRK-01", Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available },
-                new Truck { Id = "TRK-02", Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned },
-                new Truck { Id = "TRK-03", Model = "Fuso Fighter", LicensePlate = "CAA-9101", Status = ResourceStatus.Available },
-                new Truck { Id = "TRK-04", Model = "Isuzu Elf", LicensePlate = "CBC-5555", Status = ResourceStatus.Available },
-            };
-            UpdateGridDisplay();
-        }
-
-        private void UpdateGridDisplay()
-        {
-            if (allTrucks == null) return;
-            IEnumerable<Truck> processedData = allTrucks;
-            string searchText = textBoxSearch.Text.ToLower().Trim();
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                processedData = processedData.Where(t =>
-                    t.Id.ToLower().Contains(searchText) ||
-                    t.Model.ToLower().Contains(searchText) ||
-                    t.LicensePlate.ToLower().Contains(searchText)
-                ).ToList();
-            }
-            string sortBy = comboBoxSortBy.SelectedItem.ToString();
-            switch (sortBy)
-            {
-                case "Model":
-                    processedData = isSortAscending ? processedData.OrderBy(t => t.Model) : processedData.OrderByDescending(t => t.Model);
-                    break;
-                case "Status":
-                    processedData = isSortAscending ? processedData.OrderBy(t => t.Status) : processedData.OrderByDescending(t => t.Status);
-                    break;
-                default:
-                    processedData = isSortAscending ? processedData.OrderBy(t => t.Id) : processedData.OrderByDescending(t => t.Id);
-                    break;
-            }
-            dataGridViewTrucks.DataSource = processedData.ToList();
-        }
-
-        private void Sort_Changed(object sender, EventArgs e)
-        {
-            UpdateGridDisplay();
-        }
-
-        private void buttonSortOrder_Click(object sender, EventArgs e)
-        {
-            isSortAscending = !isSortAscending;
-            buttonSortOrder.Text = isSortAscending ? "ASC" : "DESC";
-            UpdateGridDisplay();
-        }
-
-        private void buttonAddNew_Click(object sender, EventArgs e)
+        private async void buttonAddNew_Click(object sender, EventArgs e)
         {
             using (var form = new AddEditTruckForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    allTrucks.Add(form.TheTruck);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Truck successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    try
+                    {
+                        await _truckService.CreateTruckAsync(form.TheTruck);
+                        await LoadTrucksAsync(); // Refresh data from the database
+                        MessageBox.Show("Truck successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to add truck: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
-        private void dataGridViewTrucks_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dataGridViewTrucks_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dataGridViewTrucks.Columns[e.ColumnIndex].Name != "Edit")
                 return;
 
-            string truckId = dataGridViewTrucks.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-            var truckToEdit = allTrucks.FirstOrDefault(t => t.Id == truckId);
-
-            if (truckToEdit != null)
+            if (dataGridViewTrucks.Rows[e.RowIndex].DataBoundItem is Truck truckToEdit)
             {
                 using (var form = new AddEditTruckForm(truckToEdit))
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        int index = allTrucks.FindIndex(t => t.Id == truckId);
-                        if (index != -1)
+                        try
                         {
-                            allTrucks[index] = form.TheTruck;
+                            await _truckService.UpdateTruckAsync(form.TheTruck);
+                            await LoadTrucksAsync(); // Refresh data
+                            MessageBox.Show("Truck successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        UpdateGridDisplay();
-                        MessageBox.Show("Truck successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to update truck: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
+        }
+
+        private async void Sort_Changed(object sender, EventArgs e)
+        {
+            await LoadTrucksAsync();
+        }
+
+        private async void buttonSortOrder_Click(object sender, EventArgs e)
+        {
+            isSortAscending = !isSortAscending;
+            buttonSortOrder.Text = isSortAscending ? "ASC" : "DESC";
+            await LoadTrucksAsync();
         }
     }
 }
