@@ -4,7 +4,7 @@ namespace eshift_management.Models
 {
     public class Job
     {
-        required public string Id { get; set; }
+        required public int Id { get; set; }
         required public CustomerModel Customer { get; set; }
         required public string PickupLocation { get; set; }
         required public string DropoffLocation { get; set; }

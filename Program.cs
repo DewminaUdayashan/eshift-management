@@ -1,4 +1,5 @@
 using Dapper;
+using eshift_management.Data.TypeHandlers;
 
 namespace eshift_management
 {
@@ -13,6 +14,7 @@ namespace eshift_management
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             SqlMapper.AddTypeHandler(new UserTypeHandler());
+            SqlMapper.AddTypeHandler(new JobStatusTypeHandler());
             ApplicationConfiguration.Initialize();
             Application.Run(new LoginForm());
         }

@@ -57,7 +57,7 @@ namespace eshift_management
         {
             var unit = new TransportUnit
             {
-                Id = isEditMode ? currentUnit.Id : $"UNIT-{DateTime.Now.Ticks}",
+                Id = isEditMode ? currentUnit.Id : 0,
                 UnitName = textBoxUnitName.Text.Trim(),
                 Truck = comboBoxTruck.SelectedItem as Truck,
                 Driver = comboBoxDriver.SelectedItem as Employee,

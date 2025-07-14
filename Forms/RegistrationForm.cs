@@ -176,7 +176,7 @@ namespace eshift_management.Forms
                 MessageBox.Show("Registration successful! You will now be taken to your dashboard.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Hide();
-                new CustomerDashboard().ShowDialog();
+                new CustomerDashboard(_registeredUser).ShowDialog();
                 this.Close();
             }
             else

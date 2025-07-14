@@ -1,21 +1,29 @@
 ﻿using eshift_management.Models;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+using eshift_management.Repositories.Services;
+using eshift_management.Services.Implementations;
+using eshift_management.Services.Interfaces;
 
 namespace eshift_management.Panes
 {
+    /// <summary>
+    /// Displays and allows editing of a customer's profile.
+    /// </summary>
     public partial class CustomerProfilePane : UserControl
     {
-        // In a real app, this would be the actual logged-in user
-        private CustomerModel loggedInCustomer;
+        private UserModel user;
+        private CustomerModel? loggedInCustomer;
+        private CustomerModel? originalCustomer;
         private readonly List<Label> errorLabels;
+        private readonly ICustomerService _customerService;
 
-        public CustomerProfilePane()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CustomerProfilePane"/> class.
+        /// </summary>
+        public CustomerProfilePane(UserModel user)
         {
             InitializeComponent();
+            this.user = user;
+            _customerService = new CustomerService(new CustomerRepository());
 
             errorLabels = new List<Label>
             {
@@ -24,72 +32,104 @@ namespace eshift_management.Panes
             };
 
             InitializeErrorLabels();
-            LoadProfileData();
+            HookChangeEvents();
+            LoadProfileDataAsync();
         }
 
         private void InitializeErrorLabels()
         {
-            var errorFont = new Font("Roboto", 8);
+            var errorFont = new Font("Roboto", 8, FontStyle.Regular, GraphicsUnit.Point);
             foreach (var label in errorLabels)
             {
                 label.ForeColor = Color.Red;
                 label.Font = errorFont;
+                label.AutoSize = true;
                 label.Visible = false;
             }
         }
 
-        private void LoadProfileData()
+        private void HookChangeEvents()
         {
-            // This data would be fetched from your database based on the logged-in user's ID
-            loggedInCustomer = new CustomerModel
+            textBoxFirstName.TextChanged += (_, _) => CheckForChanges();
+            textBoxLastName.TextChanged += (_, _) => CheckForChanges();
+            textBoxPhone.TextChanged += (_, _) => CheckForChanges();
+            textBoxAddress.TextChanged += (_, _) => CheckForChanges();
+            textBoxCity.TextChanged += (_, _) => CheckForChanges();
+            textBoxPostalCode.TextChanged += (_, _) => CheckForChanges();
+        }
+
+        private async void LoadProfileDataAsync()
+        {
+            loggedInCustomer = await _customerService.GetByIdAsync(user.Id ?? 0);
+            if (loggedInCustomer == null)
             {
-                UserId = 0,
-                FirstName = "John",
-                LastName = "Smith",
-                Email = "john.s@example.com",
-                Phone = "077-1234567",
-                AddressLine = "123 Galle Rd",
-                City = "Panadura",
-                PostalCode = "12500"
+                MessageBox.Show("Customer data not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            originalCustomer = new CustomerModel
+            {
+                FirstName = loggedInCustomer.FirstName,
+                LastName = loggedInCustomer.LastName,
+                Phone = loggedInCustomer.Phone,
+                AddressLine = loggedInCustomer.AddressLine,
+                City = loggedInCustomer.City,
+                PostalCode = loggedInCustomer.PostalCode,
+                Email = user.Email,
+                UserId = loggedInCustomer.UserId
             };
 
-            // Populate the form fields
             textBoxFirstName.Text = loggedInCustomer.FirstName;
             textBoxLastName.Text = loggedInCustomer.LastName;
-            textBoxEmail.Text = loggedInCustomer.Email;
+            textBoxEmail.Text = user.Email;
             textBoxPhone.Text = loggedInCustomer.Phone;
             textBoxAddress.Text = loggedInCustomer.AddressLine;
             textBoxCity.Text = loggedInCustomer.City;
             textBoxPostalCode.Text = loggedInCustomer.PostalCode;
 
-            // Make the email field read-only as it should not be changed
             textBoxEmail.Enabled = false;
+            buttonSaveChanges.Enabled = false;
         }
 
         private void ClearErrorLabels()
         {
             foreach (var label in errorLabels)
-            {
                 label.Visible = false;
-            }
         }
 
-        private void buttonSaveChanges_Click(object sender, EventArgs e)
+        private void CheckForChanges()
+        {
+            if (originalCustomer == null)
+            {
+                buttonSaveChanges.Enabled = false;
+                return;
+            }
+
+            bool isChanged =
+                textBoxFirstName.Text.Trim() != originalCustomer.FirstName ||
+                textBoxLastName.Text.Trim() != originalCustomer.LastName ||
+                textBoxPhone.Text.Trim() != originalCustomer.Phone ||
+                textBoxAddress.Text.Trim() != originalCustomer.AddressLine ||
+                textBoxCity.Text.Trim() != originalCustomer.City ||
+                textBoxPostalCode.Text.Trim() != originalCustomer.PostalCode;
+
+            buttonSaveChanges.Enabled = isChanged;
+        }
+
+        private async void buttonSaveChanges_Click(object sender, EventArgs e)
         {
             ClearErrorLabels();
 
-            // Create a temporary model for validation
             var updatedCustomer = new CustomerModel
             {
-                Id = loggedInCustomer.Id,
-                UserId = 0,
-                Email = loggedInCustomer.Email, // Email doesn't change
+                UserId = loggedInCustomer!.UserId,
+                Email = user.Email,
                 FirstName = textBoxFirstName.Text.Trim(),
                 LastName = textBoxLastName.Text.Trim(),
                 Phone = textBoxPhone.Text.Trim(),
                 AddressLine = textBoxAddress.Text.Trim(),
                 City = textBoxCity.Text.Trim(),
-                PostalCode = textBoxPostalCode.Text.Trim(),
+                PostalCode = textBoxPostalCode.Text.Trim()
             };
 
             var validator = new CustomerValidator();
@@ -97,7 +137,6 @@ namespace eshift_management.Panes
 
             if (!validationResult.IsValid)
             {
-                // Show errors inline
                 foreach (var error in validationResult.Errors)
                 {
                     switch (error.PropertyName)
@@ -106,7 +145,6 @@ namespace eshift_management.Panes
                             labelFirstNameError.Text = error.ErrorMessage;
                             labelFirstNameError.Visible = true;
                             break;
-                        // Add cases for other fields...
                         case nameof(CustomerModel.LastName):
                             labelLastNameError.Text = error.ErrorMessage;
                             labelLastNameError.Visible = true;
@@ -132,16 +170,30 @@ namespace eshift_management.Panes
                 return;
             }
 
-            // If validation succeeds, update the main customer object
-            // In a real app, you would save this to the database here
-            loggedInCustomer.FirstName = updatedCustomer.FirstName;
-            loggedInCustomer.LastName = updatedCustomer.LastName;
-            loggedInCustomer.Phone = updatedCustomer.Phone;
-            loggedInCustomer.AddressLine = updatedCustomer.AddressLine;
-            loggedInCustomer.City = updatedCustomer.City;
-            loggedInCustomer.PostalCode = updatedCustomer.PostalCode;
+            try
+            {
+                await _customerService.UpdateAsync(updatedCustomer);
 
-            MessageBox.Show("Profile updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                loggedInCustomer = updatedCustomer;
+                originalCustomer = new CustomerModel
+                {
+                    FirstName = updatedCustomer.FirstName,
+                    LastName = updatedCustomer.LastName,
+                    Phone = updatedCustomer.Phone,
+                    AddressLine = updatedCustomer.AddressLine,
+                    City = updatedCustomer.City,
+                    PostalCode = updatedCustomer.PostalCode,
+                    Email = updatedCustomer.Email,
+                    UserId = updatedCustomer.UserId
+                };
+
+                buttonSaveChanges.Enabled = false;
+                MessageBox.Show("Profile updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to update profile.\n\nError: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
