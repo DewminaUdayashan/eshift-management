@@ -25,5 +25,10 @@ namespace eshift_management.Services.Interfaces
         /// A tuple containing a success flag, an optional error message, and the authenticated UserModel if successful.
         /// </returns>
         Task<(bool IsSuccess, string? ErrorMessage, UserModel? User)> LoginAsync(string email, string password);
+
+        /// <summary>
+        /// Checks if the default administrator user exists, and creates it if not.
+        /// </summary>
+        Task EnsureAdminUserExistsAsync();
     }
 }

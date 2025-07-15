@@ -2,7 +2,9 @@
 using eshift_management.Core.Services.Interfaces;
 using eshift_management.Models;
 using eshift_management.Repositories.Interfaces;
+using eshift_management.Repositories.Services;
 using eshift_management.Services.Interfaces;
+using Microsoft.VisualBasic.ApplicationServices;
 
 namespace eshift_management.Services.Implementations
 {
@@ -91,6 +93,31 @@ namespace eshift_management.Services.Implementations
         {
             var random = new Random();
             return random.Next(100000, 999999).ToString(); // 6-digit OTP
+        }
+
+
+        /// <inheritdoc/>
+        public async Task EnsureAdminUserExistsAsync()
+        {
+            const string adminEmail = "admin@eshift.com";
+            const string adminPassword = "Admin@eshift123";
+
+            // 1. Check if the admin user already exists.
+            var existingAdmin = await _userService.FindByEmailAsync(adminEmail);
+
+            // 2. If the user does not exist, create them.
+            if (existingAdmin == null)
+            {
+                var adminUser = new UserModel
+                {
+                    Email = adminEmail,
+                    UserType = UserType.Admin,
+                    IsEmailVerified = true,
+                    PasswordHash = PasswordHelper.HashPassword(adminPassword)
+                };
+
+                await _userService.AddAsync(adminUser);
+            }
         }
     }
 }

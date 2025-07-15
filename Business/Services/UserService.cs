@@ -47,5 +47,5 @@ namespace eshift_management.Services.Implementations
         {
             return _userRepository.FindByEmailAsync(email);
         }
-    }
-}
+     }
+ }
