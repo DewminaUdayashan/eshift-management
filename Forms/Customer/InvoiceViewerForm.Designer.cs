@@ -16,53 +16,50 @@
         #region Windows Form Designer generated code
         private void InitializeComponent()
         {
-            this.webBrowserInvoice = new System.Windows.Forms.WebBrowser();
-            this.buttonSave = new MaterialSkin.Controls.MaterialButton();
-            this.SuspendLayout();
+            webBrowserInvoice = new WebBrowser();
+            buttonSave = new MaterialSkin.Controls.MaterialButton();
+            SuspendLayout();
             // 
             // webBrowserInvoice
             // 
-            this.webBrowserInvoice.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.webBrowserInvoice.Location = new System.Drawing.Point(6, 70);
-            this.webBrowserInvoice.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowserInvoice.Name = "webBrowserInvoice";
-            this.webBrowserInvoice.Size = new System.Drawing.Size(788, 430);
-            this.webBrowserInvoice.TabIndex = 0;
+            webBrowserInvoice.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            webBrowserInvoice.Location = new Point(6, 70);
+            webBrowserInvoice.MinimumSize = new Size(20, 20);
+            webBrowserInvoice.Name = "webBrowserInvoice";
+            webBrowserInvoice.Size = new Size(788, 430);
+            webBrowserInvoice.TabIndex = 0;
             // 
             // buttonSave
             // 
-            this.buttonSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonSave.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.buttonSave.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.buttonSave.Depth = 0;
-            this.buttonSave.HighEmphasis = true;
-            this.buttonSave.Icon = null;
-            this.buttonSave.Location = new System.Drawing.Point(613, 510);
-            this.buttonSave.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.buttonSave.MouseState = MaterialSkin.MouseState.HOVER;
-            this.buttonSave.Name = "buttonSave";
-            this.buttonSave.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.buttonSave.Size = new System.Drawing.Size(174, 36);
-            this.buttonSave.TabIndex = 1;
-            this.buttonSave.Text = "Download as HTML";
-            this.buttonSave.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.buttonSave.UseAccentColor = false;
-            this.buttonSave.UseVisualStyleBackColor = true;
-            this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
+            buttonSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonSave.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            buttonSave.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            buttonSave.Depth = 0;
+            buttonSave.HighEmphasis = true;
+            buttonSave.Icon = null;
+            buttonSave.Location = new Point(618, 510);
+            buttonSave.Margin = new Padding(4, 6, 4, 6);
+            buttonSave.MouseState = MaterialSkin.MouseState.HOVER;
+            buttonSave.Name = "buttonSave";
+            buttonSave.NoAccentTextColor = Color.Empty;
+            buttonSave.Size = new Size(169, 36);
+            buttonSave.TabIndex = 1;
+            buttonSave.Text = "Download";
+            buttonSave.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            buttonSave.UseAccentColor = false;
+            buttonSave.UseVisualStyleBackColor = true;
+            buttonSave.Click += buttonSave_Click;
             // 
             // InvoiceViewerForm
             // 
-            this.ClientSize = new System.Drawing.Size(800, 560);
-            this.Controls.Add(this.buttonSave);
-            this.Controls.Add(this.webBrowserInvoice);
-            this.Name = "InvoiceViewerForm";
-            this.Padding = new System.Windows.Forms.Padding(3, 64, 3, 3);
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Invoice Viewer";
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            ClientSize = new Size(800, 560);
+            Controls.Add(buttonSave);
+            Controls.Add(webBrowserInvoice);
+            Name = "InvoiceViewerForm";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Invoice Viewer";
+            ResumeLayout(false);
+            PerformLayout();
 
         }
         #endregion
