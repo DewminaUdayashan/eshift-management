@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO; // Required for MemoryStream
 using System.Linq;
 
-namespace eshift_management.Services
+namespace eshift_management.Core.Utils
 {
     /// <summary>
     /// A service dedicated to generating various PDF reports using the QuestPDF library.
