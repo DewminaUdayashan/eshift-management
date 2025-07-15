@@ -35,15 +35,19 @@ namespace eshift_management.Repositories.Services
         public async Task<IEnumerable<CustomerModel>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true)
         {
             var sqlBuilder = new StringBuilder(@"
-                SELECT 
-                    user_id AS UserId,
-                    first_name AS FirstName,
-                    last_name AS LastName,
-                    phone_number AS Phone,
-                    address_line AS AddressLine,
-                    city AS City,
-                    postal_code AS PostalCode
-                FROM customers");
+                SELECT
+    c.user_id AS UserId,
+    u.email AS Email,
+    c.first_name AS FirstName,
+    c.last_name AS LastName,
+    c.phone_number AS Phone,
+    c.address_line AS AddressLine,
+    c.city AS City,
+    c.postal_code AS PostalCode
+FROM
+    customers c
+JOIN
+    users u ON c.user_id = u.id");
 
             if (filter != null && filter.Count > 0)
             {

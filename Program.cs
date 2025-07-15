@@ -1,5 +1,6 @@
 using Dapper;
 using eshift_management.Data.TypeHandlers;
+using QuestPDF.Infrastructure;
 
 namespace eshift_management
 {
@@ -13,6 +14,10 @@ namespace eshift_management
         {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
+
+            // --- IMPORTANT: Configure QuestPDF License ---
+            QuestPDF.Settings.License = LicenseType.Community;
+
             SqlMapper.AddTypeHandler(new UserTypeHandler());
             SqlMapper.AddTypeHandler(new JobStatusTypeHandler());
             ApplicationConfiguration.Initialize();
