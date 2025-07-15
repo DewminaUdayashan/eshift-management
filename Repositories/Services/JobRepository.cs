@@ -2,11 +2,7 @@
 using eshift_management.Core.Repositories;
 using eshift_management.Data;
 using eshift_management.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace eshift_management.Repositories
 {
@@ -37,10 +33,82 @@ namespace eshift_management.Repositories
         private static Job MapJob(Job job, CustomerModel customer, TransportUnit unit)
         {
             job.Customer = customer;
-            // Dapper populates a new object even if all columns are NULL.
-            // Check a key property (like Id) to determine if it's a real entity.
             job.AssignedUnit = unit?.Id > 0 ? unit : null;
             return job;
+        }
+
+        public async Task<IEnumerable<Job>> GetAllAsync(Dictionary<string, object>? filter = null, string? orderBy = null, bool isAscending = true)
+        {
+            var sqlBuilder = new StringBuilder(JobSelectionSql);
+            var parameters = new DynamicParameters();
+            var conditions = new List<string>();
+
+            if (filter != null && filter.Any())
+            {
+                // General Search Term Filter
+                if (filter.TryGetValue("SearchTerm", out var searchTermValue) && searchTermValue?.ToString() is string searchTerm && !string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    conditions.Add(@"(
+                        j.id LIKE @SearchQuery OR 
+                        CONCAT(c.first_name, ' ', c.last_name) LIKE @SearchQuery OR 
+                        j.pickup_location LIKE @SearchQuery OR 
+                        j.dropoff_location LIKE @SearchQuery
+                    )");
+                    parameters.Add("SearchQuery", $"%{searchTerm}%");
+                }
+
+                // Status Filter
+                if (filter.TryGetValue("Status", out var statusValue))
+                {
+                    conditions.Add("j.status = @Status");
+                    parameters.Add("Status", statusValue.ToString());
+                }
+
+                // Date Range Filter
+                if (filter.TryGetValue("StartDate", out var startDateValue))
+                {
+                    conditions.Add("j.pickup_date >= @StartDate");
+                    parameters.Add("StartDate", startDateValue);
+                }
+                if (filter.TryGetValue("EndDate", out var endDateValue))
+                {
+                    // Add 1 day to the end date to make the range inclusive of the entire day.
+                    var inclusiveEndDate = ((DateTime)endDateValue).AddDays(1);
+                    conditions.Add("j.pickup_date < @EndDate");
+                    parameters.Add("EndDate", inclusiveEndDate);
+                }
+            }
+
+            if (conditions.Any())
+            {
+                sqlBuilder.Append($" WHERE {string.Join(" AND ", conditions)}");
+            }
+
+            // Dynamic Sorting (ORDER BY clause)
+            if (!string.IsNullOrWhiteSpace(orderBy))
+            {
+                var allowedSortColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "Id", "PickupDate", "Status", "TotalCost" };
+
+                if (allowedSortColumns.Contains(orderBy))
+                {
+                    var dbColumnName = orderBy.ToLowerInvariant() switch
+                    {
+                        "pickupdate" => "j.pickup_date",
+                        "totalcost" => "j.total_cost",
+                        _ => $"j.{orderBy.ToLower()}"
+                    };
+                    var direction = isAscending ? "ASC" : "DESC";
+                    sqlBuilder.Append($" ORDER BY {dbColumnName} {direction}");
+                }
+            }
+
+            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
+                sqlBuilder.ToString(),
+                MapJob,
+                parameters,
+                splitOn: "UserId,Id"
+            );
         }
 
         public async Task<int> AddAsync(Job job)
@@ -49,18 +117,7 @@ namespace eshift_management.Repositories
                 INSERT INTO jobs (customer_id, pickup_location, dropoff_location, pickup_date, load_size, description, status)
                 VALUES (@CustomerId, @PickupLocation, @DropoffLocation, @PickupDate, @LoadSize, @Description, @Status);
                 SELECT LAST_INSERT_ID();";
-
-            var parameters = new
-            {
-                CustomerId = job.Customer.UserId,
-                job.PickupLocation,
-                job.DropoffLocation,
-                job.PickupDate,
-                job.LoadSize,
-                job.Description,
-                Status = job.Status.ToString()
-            };
-
+            var parameters = new { CustomerId = job.Customer.UserId, job.PickupLocation, job.DropoffLocation, job.PickupDate, job.LoadSize, job.Description, Status = job.Status.ToString() };
             return await DbExecutor.ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -73,180 +130,61 @@ namespace eshift_management.Repositories
         public async Task<Job?> GetByIdAsync(int id)
         {
             var sql = $"{JobSelectionSql} WHERE j.id = @Id;";
-
-            var queryResult = await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-                sql,
-                MapJob,
-                new { Id = id },
-                splitOn: "UserId,Id"
-            );
-
+            var queryResult = await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(sql, MapJob, new { Id = id }, splitOn: "UserId,Id");
             return queryResult.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<Job>> GetAllAsync()
-        {
-            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-               JobSelectionSql,
-               MapJob,
-               splitOn: "UserId,Id"
-           );
-        }
-
-        public async Task<IEnumerable<Job>> GetJobsByCustomerIdAsync(int customerId)
+        public async Task<IEnumerable<Job>> GetJobsByCustomerAsync(int customerId)
         {
             var sql = $"{JobSelectionSql} WHERE j.customer_id = @CustomerId;";
-
-            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-                sql,
-                MapJob,
-                new { CustomerId = customerId },
-                splitOn: "UserId,Id"
-            );
+            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(sql, MapJob, new { CustomerId = customerId }, splitOn: "UserId,Id");
         }
 
         public async Task UpdateAsync(Job job)
         {
             const string sql = @"
                 UPDATE jobs SET
-                    pickup_location = @PickupLocation,
-                    dropoff_location = @DropoffLocation,
-                    pickup_date = @PickupDate,
-                    load_size = @LoadSize,
-                    description = @Description,
-                    status = @Status,
-                    total_cost = @TotalCost,
-                    estimated_hours = @EstimatedHours,
-                    rejection_reason = @RejectionReason,
-                    transport_unit_id = @TransportUnitId
+                    pickup_location = @PickupLocation, dropoff_location = @DropoffLocation, pickup_date = @PickupDate,
+                    load_size = @LoadSize, description = @Description, status = @Status, total_cost = @TotalCost,
+                    estimated_hours = @EstimatedHours, rejection_reason = @RejectionReason, transport_unit_id = @TransportUnitId
                 WHERE id = @Id;";
-
-            var parameters = new
-            {
-                job.Id,
-                job.PickupLocation,
-                job.DropoffLocation,
-                job.PickupDate,
-                job.LoadSize,
-                job.Description,
-                Status = job.Status.ToString(),
-                job.TotalCost,
-                job.EstimatedHours,
-                job.RejectionReason,
-                TransportUnitId = job.AssignedUnit?.Id
-            };
-
+            var parameters = new { job.Id, job.PickupLocation, job.DropoffLocation, job.PickupDate, job.LoadSize, job.Description, Status = job.Status.ToString(), job.TotalCost, job.EstimatedHours, job.RejectionReason, TransportUnitId = job.AssignedUnit?.Id };
             await DbExecutor.ExecuteAsync(sql, parameters);
         }
 
         public async Task<IEnumerable<Job>> GetJobsByStatusAsync(JobStatus status)
         {
             var sql = $"{JobSelectionSql} WHERE j.status = @Status;";
-
-            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-                sql,
-                MapJob,
-                new { Status = status.ToString() },
-                splitOn: "UserId,Id"
-            );
+            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(sql, MapJob, new { Status = status.ToString() }, splitOn: "UserId,Id");
         }
 
         public async Task AssignTransportUnitAsync(int jobId, int unitId)
         {
-            const string sql = @"
-                UPDATE jobs SET
-                    transport_unit_id = @UnitId,
-                    status = 'Scheduled'
-                WHERE id = @JobId AND status = 'Approved';";
-
+            const string sql = @"UPDATE jobs SET transport_unit_id = @UnitId, status = 'Scheduled' WHERE id = @JobId AND status = 'Approved';";
             await DbExecutor.ExecuteAsync(sql, new { JobId = jobId, UnitId = unitId });
         }
 
         public async Task UpdateJobStatusAsync(int jobId, JobStatus status, string? rejectionReason = null)
         {
-            const string sql = @"
-                UPDATE jobs SET
-                    status = @Status,
-                    rejection_reason = @Reason
-                WHERE id = @JobId;";
-
-            await DbExecutor.ExecuteAsync(sql, new
-            {
-                JobId = jobId,
-                Status = status.ToString(),
-                Reason = rejectionReason
-            });
+            const string sql = @"UPDATE jobs SET status = @Status, rejection_reason = @Reason WHERE id = @JobId;";
+            await DbExecutor.ExecuteAsync(sql, new { JobId = jobId, Status = status.ToString(), Reason = rejectionReason });
         }
 
-        public async Task<IEnumerable<Job>> GetJobsByCustomerAsync(int customerId)
+        public async Task<bool> IsUnitScheduledOnDateAsync(int unitId, DateTime date, int? excludeJobId = null)
         {
-            var sql = $"{JobSelectionSql} WHERE j.customer_id = @CustomerId;";
-
-            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-                sql,
-                MapJob,
-                new { CustomerId = customerId },
-                splitOn: "UserId,Id"
-            );
-        }
-
-        public async Task<IEnumerable<Job>> GetAllAsync(Dictionary<string, object>? filter = null, string? orderBy = null, bool isAscending = true)
-        {
-            // Start with the base query that joins all necessary tables.
-            var sqlBuilder = new StringBuilder(JobSelectionSql);
+            var sqlBuilder = new StringBuilder("SELECT COUNT(*) FROM jobs WHERE transport_unit_id = @UnitId AND DATE(pickup_date) = DATE(@Date)");
             var parameters = new DynamicParameters();
+            parameters.Add("UnitId", unitId);
+            parameters.Add("Date", date);
 
-            // --- Dynamic Filtering (WHERE clause) ---
-            if (filter != null && filter.Any())
+            if (excludeJobId.HasValue)
             {
-                var conditions = new List<string>();
-                foreach (var pair in filter)
-                {
-                    // Assuming the filter key maps directly to a column on the 'jobs' table (j).
-                    // Example: a key "status" becomes "j.status = @status".
-                    conditions.Add($"j.{pair.Key} = @{pair.Key}");
-                    parameters.Add(pair.Key, pair.Value);
-                }
-                sqlBuilder.Append($" WHERE {string.Join(" AND ", conditions)}");
+                sqlBuilder.Append(" AND id != @ExcludeJobId");
+                parameters.Add("ExcludeJobId", excludeJobId.Value);
             }
 
-            // --- Dynamic Sorting (ORDER BY clause) ---
-            if (!string.IsNullOrWhiteSpace(orderBy))
-            {
-                // IMPORTANT: Whitelist sortable columns to prevent SQL injection.
-                var allowedSortColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Id",
-            "PickupDate",
-            "Status",
-            "TotalCost"
-            // Add any other columns you want to allow sorting by.
-        };
-
-                if (allowedSortColumns.Contains(orderBy))
-                {
-                    // Map the property name to the actual database column name.
-                    var dbColumnName = orderBy switch
-                    {
-                        "PickupDate" => "j.pickup_date",
-                        "TotalCost" => "j.total_cost",
-                        _ => $"j.{orderBy}" // Default case for direct mapping (e.g., Id, Status)
-                    };
-
-                    var direction = isAscending ? "ASC" : "DESC";
-                    sqlBuilder.Append($" ORDER BY {dbColumnName} {direction}");
-                }
-            }
-
-            var sql = sqlBuilder.ToString();
-
-            // Execute the dynamically built query.
-            return await DbExecutor.QueryAsync<Job, CustomerModel, TransportUnit, Job>(
-                sql,
-                MapJob,
-                parameters,
-                splitOn: "UserId,Id"
-            );
+            var count = await DbExecutor.ExecuteScalarAsync<int>(sqlBuilder.ToString(), parameters);
+            return count > 0;
         }
     }
 }
