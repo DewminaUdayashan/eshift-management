@@ -1,11 +1,15 @@
-﻿using eshift_management.Models;
+﻿using eshift_management.Core.Services;
+using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Repositories.Services;
+using eshift_management.Services;
 using MaterialSkin.Controls;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace eshift_management.Panes
@@ -16,96 +20,72 @@ namespace eshift_management.Panes
         private ReportType selectedReportType = ReportType.None;
         private MaterialCard selectedCard = null;
 
-        // Master lists for all dummy data
-        private List<CustomerModel> _customers;
-        private List<Truck> _trucks;
-        private List<Employee> _employees;
-        private List<TransportUnit> _units;
-        private List<Job> _jobs;
-
+        // Service to fetch report data
+        private readonly IReportService _reportService;
 
         public ReportsPane()
         {
             InitializeComponent();
-            CreateFullDummyDataset(); // Create a complete set of data on load
+
+            // In a real app with DI, these would be injected.
+            var customerRepo = new CustomerRepository();
+            var truckRepo = new TruckRepository();
+            var employeeRepo = new EmployeeRepository();
+            var jobRepo = new JobRepository();
+            _reportService = new ReportService(customerRepo, truckRepo, employeeRepo, jobRepo);
+
             webBrowserPreview.DocumentText = GetPlaceholderHtml();
         }
 
-        /// <summary>
-        /// Creates a complete set of dummy data for all reports.
-        /// </summary>
-        private void CreateFullDummyDataset()
-        {
-            // Customers
-            _customers = new List<CustomerModel>
-            {
-                new CustomerModel { Id = 1,UserId=0, FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City = "Springfield", PostalCode = "12345" },
-                new CustomerModel { Id = 2,UserId=0, FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City = "Shelbyville", PostalCode = "54321" }
-            };
-
-            // Trucks
-            _trucks = new List<Truck>
-            {
-                new Truck { Id = 1, Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available },
-                new Truck { Id = 2, Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned }
-            };
-
-            // Employees
-            _employees = new List<Employee>
-            {
-                new Employee { Id =1, FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, Status = ResourceStatus.Assigned, ContactNumber = "071-111", LicenseNumber = "B123456" },
-                new Employee { Id = 2, FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, Status = ResourceStatus.Available, ContactNumber = "077-222", LicenseNumber = "B789012" },
-                new Employee { Id = 3, FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, Status = ResourceStatus.Assigned, ContactNumber = "071-333", LicenseNumber = "N/A" },
-                new Employee { Id = 4, FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, Status = ResourceStatus.Available, ContactNumber = "077-444", LicenseNumber = "N/A" }
-            };
-
-            // Transport Units
-            _units = new List<TransportUnit>
-            {
-                new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = _trucks[1], Driver = _employees[0], Assistant = _employees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" }
-            };
-
-            // Jobs
-            _jobs = new List<Job>
-            {
-                 new Job { Id =1, Status = JobStatus.Scheduled, PickupDate = DateTime.Now.AddDays(2), Customer = _customers[1], AssignedUnit = _units[0], PickupLocation = "Negombo", DropoffLocation = "Trincomalee", LoadSize="Small", Description="Desc", RejectionReason="", TotalCost=40000, EstimatedHours=8 },
-                 new Job { Id = 2, Status = JobStatus.OnGoing, PickupDate = DateTime.Now, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Matara", DropoffLocation = "Batticaloa", LoadSize="Medium", Description="Desc", RejectionReason="", TotalCost=60000, EstimatedHours=10 },
-                 new Job { Id = 3, Status = JobStatus.Completed, PickupDate = DateTime.Now.AddDays(-10), TotalCost = 35000, EstimatedHours = 7, Customer = _customers[0], AssignedUnit = _units[0], PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", LoadSize="Small", Description="Desc", RejectionReason=""}
-            };
-        }
-
-        private void card_Click(object sender, EventArgs e)
+        private async void card_Click(object sender, EventArgs e)
         {
             var clickedCard = (sender is Label ? (MaterialCard)((Label)sender).Parent : (MaterialCard)sender);
             if (selectedCard != null) selectedCard.Depth = 0;
             selectedCard = clickedCard;
             selectedCard.Depth = 1;
+
             if (selectedCard == cardCustomers) selectedReportType = ReportType.Customers;
             else if (selectedCard == cardResources) selectedReportType = ReportType.Resources;
             else if (selectedCard == cardOngoingJobs) selectedReportType = ReportType.OngoingJobs;
             else if (selectedCard == cardRevenue) selectedReportType = ReportType.Revenue;
-            GenerateReportPreview();
+
+            await GenerateReportPreview(); // Make the call asynchronous
             buttonGenerate.Enabled = true;
         }
 
-        private void GenerateReportPreview()
+        private async Task GenerateReportPreview()
         {
-            string htmlContent = GetPlaceholderHtml("Generating report...");
-            switch (selectedReportType)
+            // Show a loading message while fetching data
+            webBrowserPreview.DocumentText = GetPlaceholderHtml("Generating report...");
+            string htmlContent = "";
+
+            try
             {
-                case ReportType.Customers:
-                    htmlContent = GenerateCustomerReportHtml();
-                    break;
-                case ReportType.Resources:
-                    htmlContent = GenerateResourceReportHtml();
-                    break;
-                case ReportType.OngoingJobs:
-                    htmlContent = GenerateOngoingJobsReportHtml();
-                    break;
-                case ReportType.Revenue:
-                    htmlContent = GenerateRevenueReportHtml();
-                    break;
+                switch (selectedReportType)
+                {
+                    case ReportType.Customers:
+                        htmlContent = await GenerateCustomerReportHtml();
+                        break;
+                    case ReportType.Resources:
+                        htmlContent = await GenerateResourceReportHtml();
+                        break;
+                    case ReportType.OngoingJobs:
+                        htmlContent = await GenerateOngoingJobsReportHtml();
+                        break;
+                    case ReportType.Revenue:
+                        htmlContent = await GenerateRevenueReportHtml();
+                        break;
+                    default:
+                        htmlContent = GetPlaceholderHtml();
+                        break;
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to generate report data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                htmlContent = GetPlaceholderHtml("Error generating report.");
+            }
+
             webBrowserPreview.DocumentText = htmlContent;
         }
 
@@ -135,49 +115,51 @@ namespace eshift_management.Panes
 
         #region HTML Generation Methods
 
-        private string GenerateCustomerReportHtml()
+        private async Task<string> GenerateCustomerReportHtml()
         {
+            var customers = await _reportService.GetCustomerReportDataAsync();
             var sb = new StringBuilder();
             sb.Append("<tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th></tr>");
-            foreach (var customer in _customers)
+            foreach (var customer in customers)
             {
-                sb.Append($"<tr><td>{customer.Id}</td><td>{customer.FullName}</td><td>{customer.Email}</td><td>{customer.Phone}</td></tr>");
+                sb.Append($"<tr><td>{customer.UserId}</td><td>{customer.FullName}</td><td>{customer.Email}</td><td>{customer.Phone}</td></tr>");
             }
             return GetHtmlTemplate("Customer Report", sb.ToString());
         }
 
-        private string GenerateResourceReportHtml()
+        private async Task<string> GenerateResourceReportHtml()
         {
+            var (trucks, employees) = await _reportService.GetResourceReportDataAsync();
             var sb = new StringBuilder();
             sb.Append("<tr><th>ID</th><th>Type</th><th>Identifier</th><th>Status</th></tr>");
-            foreach (var truck in _trucks)
+            foreach (var truck in trucks)
             {
                 sb.Append($"<tr><td>{truck.Id}</td><td>Truck</td><td>{truck.Model} ({truck.LicensePlate})</td><td>{truck.Status}</td></tr>");
             }
-            foreach (var emp in _employees)
+            foreach (var emp in employees)
             {
                 sb.Append($"<tr><td>{emp.Id}</td><td>{emp.Position}</td><td>{emp.FullName}</td><td>{emp.Status}</td></tr>");
             }
             return GetHtmlTemplate("All Resources Report", sb.ToString());
         }
 
-        private string GenerateOngoingJobsReportHtml()
+        private async Task<string> GenerateOngoingJobsReportHtml()
         {
+            var onGoingJobs = await _reportService.GetOngoingJobsReportDataAsync();
             var sb = new StringBuilder();
             sb.Append("<tr><th>Job ID</th><th>Customer</th><th>Pickup Date</th><th>Assigned Unit</th></tr>");
-            var onGoingJobs = _jobs.Where(j => j.Status == JobStatus.Scheduled || j.Status == JobStatus.OnGoing);
             foreach (var job in onGoingJobs)
             {
                 sb.Append($"<tr><td>{job.Id}</td><td>{job.Customer.FullName}</td><td>{job.PickupDate:yyyy-MM-dd}</td><td>{job.AssignedUnit?.UnitName ?? "N/A"}</td></tr>");
             }
-            return GetHtmlTemplate("On-going Jobs Report", sb.ToString());
+            return GetHtmlTemplate("On-going & Scheduled Jobs Report", sb.ToString());
         }
 
-        private string GenerateRevenueReportHtml()
+        private async Task<string> GenerateRevenueReportHtml()
         {
+            var completedJobs = await _reportService.GetRevenueReportDataAsync();
             var sb = new StringBuilder();
             sb.Append("<tr><th>Job ID</th><th>Completion Date</th><th>Customer</th><th>Billed Amount (LKR)</th></tr>");
-            var completedJobs = _jobs.Where(j => j.Status == JobStatus.Completed);
             decimal totalRevenue = 0;
             foreach (var job in completedJobs)
             {
@@ -185,7 +167,7 @@ namespace eshift_management.Panes
                 totalRevenue += job.TotalCost;
             }
             sb.Append($"<tr class='total-row'><td></td><td></td><td style='text-align:right;font-weight:bold;'>Total Revenue</td><td style='text-align:right;font-weight:bold;'>{totalRevenue:N2}</td></tr>");
-            return GetHtmlTemplate("Revenue Report", sb.ToString());
+            return GetHtmlTemplate("Revenue Report (Completed Jobs)", sb.ToString());
         }
 
         private string GetHtmlTemplate(string title, string tableRows)
@@ -202,7 +184,7 @@ namespace eshift_management.Panes
                         tr:nth-child(even) {{ background-color: #f2f2f2; }}
                         th {{ background-color: #0D47A1; color: white; }}
                         h1 {{ color: #333; }}
-                        .total-row {{ background-color: #e0e0e0; }}
+                        .total-row {{ background-color: #e0e0e0; font-weight: bold; }}
                     </style>
                 </head>
                 <body>
