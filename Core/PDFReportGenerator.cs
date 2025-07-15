@@ -15,19 +15,37 @@ namespace eshift_management.Services
     /// </summary>
     public class PdfReportGenerator
     {
-        private static readonly string _primaryColor = "#0D47A1"; 
+        private static readonly string _primaryColor = "#0D47A1"; // A deep, professional blue
 
+        // --- Reusable styling helpers for table cells ---
+
+        /// <summary>
+        /// Applies a standard style to a table header cell.
+        /// </summary>
+        /// <param name="container">The cell container to style.</param>
+        /// <returns>A styled container.</returns>
         private IContainer StyleHeaderCell(IContainer container)
         {
             return container.Background(_primaryColor).PaddingVertical(5).PaddingHorizontal(10);
         }
 
+        /// <summary>
+        /// Applies a standard style to a table content cell, with alternating row colors.
+        /// </summary>
+        /// <param name="container">The cell container to style.</param>
+        /// <param name="isEvenRow">Indicates if the row is even to apply alternating background color.</param>
+        /// <returns>A styled container.</returns>
         private IContainer StyleContentCell(IContainer container, bool isEvenRow)
         {
             return container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
                             .Background(isEvenRow ? Colors.White : Colors.Grey.Lighten5);
         }
 
+        /// <summary>
+        /// Generates a PDF report listing all customers.
+        /// </summary>
+        /// <param name="customers">A collection of customer data.</param>
+        /// <returns>A byte array representing the generated PDF file.</returns>
         public byte[] GenerateCustomerReport(IEnumerable<CustomerModel> customers)
         {
             var document = new ReportDocument("Customer Report", customers, (table) =>
@@ -61,6 +79,12 @@ namespace eshift_management.Services
             return document.GeneratePdf();
         }
 
+        /// <summary>
+        /// Generates a PDF report listing all company resources (trucks and employees).
+        /// </summary>
+        /// <param name="trucks">A collection of truck data.</param>
+        /// <param name="employees">A collection of employee data.</param>
+        /// <returns>A byte array representing the generated PDF file.</returns>
         public byte[] GenerateResourceReport(IEnumerable<Truck> trucks, IEnumerable<Employee> employees)
         {
             var document = new ReportDocument("All Resources Report", trucks.Cast<object>().Concat(employees), (table) =>
@@ -102,6 +126,11 @@ namespace eshift_management.Services
             return document.GeneratePdf();
         }
 
+        /// <summary>
+        /// Generates a PDF report listing all scheduled and on-going jobs.
+        /// </summary>
+        /// <param name="jobs">A collection of job data.</param>
+        /// <returns>A byte array representing the generated PDF file.</returns>
         public byte[] GenerateOngoingJobsReport(IEnumerable<Job> jobs)
         {
             var document = new ReportDocument("On-going & Scheduled Jobs Report", jobs, (table) =>
@@ -135,6 +164,11 @@ namespace eshift_management.Services
             return document.GeneratePdf();
         }
 
+        /// <summary>
+        /// Generates a PDF report summarizing revenue from all completed jobs.
+        /// </summary>
+        /// <param name="jobs">A collection of completed job data.</param>
+        /// <returns>A byte array representing the generated PDF file.</returns>
         public byte[] GenerateRevenueReport(IEnumerable<Job> jobs)
         {
             var document = new ReportDocument("Revenue Report (Completed Jobs)", jobs, (table) =>
@@ -184,6 +218,12 @@ namespace eshift_management.Services
         private readonly bool _hasData;
         private static readonly string _primaryColor = "#0D47A1";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReportDocument"/> class.
+        /// </summary>
+        /// <param name="title">The title of the report.</param>
+        /// <param name="data">The collection of data to be displayed. Used to check if data exists.</param>
+        /// <param name="tableContent">An action that defines the structure and content of the report's main table.</param>
         public ReportDocument(string title, IEnumerable<object> data, Action<TableDescriptor> tableContent)
         {
             _title = title;
@@ -214,7 +254,6 @@ namespace eshift_management.Services
             container.Row(row =>
             {
                 // --- Logo ---
-                // This will load the 'logo' image from project's Resources.
                 var logoData = GetLogoFromResources();
                 if (logoData.Length > 0)
                 {
@@ -224,8 +263,8 @@ namespace eshift_management.Services
                 row.RelativeItem().PaddingLeft(10).Column(column =>
                 {
                     column.Item().Text("E-Shift Movers").FontSize(16).Bold().FontColor(_primaryColor);
-                    column.Item().Text("No. 123, Thalpe, Galle, Sri Lanka");
-                    column.Item().Text("contact@eshift.lk | +94 76 5 209 700");
+                    column.Item().Text("No. 123, Galle Road, Panadura, Sri Lanka");
+                    column.Item().Text("contact@eshift.lk | +94 11 2 345 678");
                 });
 
                 row.RelativeItem().AlignRight().Column(column =>
@@ -236,6 +275,9 @@ namespace eshift_management.Services
             });
         }
 
+        /// <summary>
+        /// Composes the main content area of the report, primarily the data table.
+        /// </summary>
         void ComposeContent(IContainer container)
         {
             container.PaddingVertical(25).Column(column =>
@@ -254,6 +296,9 @@ namespace eshift_management.Services
             });
         }
 
+        /// <summary>
+        /// Composes the footer section of the report, including page numbers.
+        /// </summary>
         void ComposeFooter(IContainer container)
         {
             container.AlignCenter().Row(row =>
@@ -277,7 +322,6 @@ namespace eshift_management.Services
         {
             try
             {
-                // The logo will be saved as a PNG in memory before being returned.
                 using (var ms = new MemoryStream())
                 {
                     var logoImage = Resources.e_shift_logo;
@@ -287,7 +331,7 @@ namespace eshift_management.Services
             }
             catch (Exception)
             {
-                // If the logo resource is missing, return an empty array to prevent crashing.
+                // If the logo resource is missing, return an empty array to prevent a crash.
                 return Array.Empty<byte>();
             }
         }
