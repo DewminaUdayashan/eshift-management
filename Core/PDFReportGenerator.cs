@@ -206,6 +206,12 @@ namespace eshift_management.Services
             });
             return document.GeneratePdf();
         }
+
+        public byte[] GenerateInvoicePdf(Job job)
+        {
+            var document = new InvoiceDocument(job);
+            return document.GeneratePdf();
+        }
     }
 
     /// <summary>
@@ -334,6 +340,134 @@ namespace eshift_management.Services
                 // If the logo resource is missing, return an empty array to prevent a crash.
                 return Array.Empty<byte>();
             }
+        }
+    }
+
+    /// <summary>
+    /// A professionally designed document structure for a single job invoice.
+    /// </summary>
+    public class InvoiceDocument : IDocument
+    {
+        private readonly Job _job;
+        private static readonly string _primaryColor = "#0D47A1";
+
+        public InvoiceDocument(Job job)
+        {
+            _job = job;
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(50);
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily(Fonts.Calibri));
+
+                page.Header().Element(ComposeHeader);
+                page.Content().Element(ComposeContent);
+                page.Footer().Element(ComposeFooter);
+            });
+        }
+
+        void ComposeHeader(IContainer container)
+        {
+            container.Row(row =>
+            {
+                var logoData = GetLogoFromResources();
+                if (logoData.Length > 0) row.ConstantItem(80).Image(logoData);
+
+                row.RelativeItem().PaddingLeft(10).Column(column =>
+                {
+                    column.Item().Text("E-Shift Movers").FontSize(20).Bold().FontColor(_primaryColor);
+                    column.Item().Text("No. 123, Galle Road, Panadura, Sri Lanka");
+                    column.Item().Text("contact@eshift.lk | +94 11 2 345 678");
+                });
+            });
+        }
+
+        void ComposeContent(IContainer container)
+        {
+            container.PaddingVertical(40).Column(column =>
+            {
+                // --- Invoice Title and Details ---
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("Invoice").FontSize(28).SemiBold();
+                        col.Item().Text($"Invoice #: {_job.Id}");
+                        col.Item().Text($"Issued: {DateTime.Now:yyyy-MM-dd}");
+                        col.Item().Text($"Due: {_job.PickupDate.AddDays(14):yyyy-MM-dd}");
+                    });
+
+                    row.ConstantItem(180).Column(col =>
+                    {
+                        col.Item().Text("Bill To").SemiBold();
+                        col.Item().Text(_job.Customer.FullName);
+                        col.Item().Text(_job.Customer.AddressLine);
+                        col.Item().Text($"{_job.Customer.City}, {_job.Customer.PostalCode}");
+                        col.Item().Text(_job.Customer.Email);
+                    });
+                });
+
+                column.Item().PaddingVertical(20);
+
+                // --- Invoice Table ---
+                column.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(4); // Description
+                        columns.RelativeColumn(1); // Quantity
+                        columns.RelativeColumn(2); // Unit Price
+                        columns.RelativeColumn(2); // Total
+                    });
+
+                    // Header
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(_primaryColor).Padding(5).Text("Service Description").FontColor(Colors.White);
+                        header.Cell().Background(_primaryColor).Padding(5).AlignCenter().Text("Quantity").FontColor(Colors.White);
+                        header.Cell().Background(_primaryColor).Padding(5).AlignRight().Text("Unit Price").FontColor(Colors.White);
+                        header.Cell().Background(_primaryColor).Padding(5).AlignRight().Text("Total").FontColor(Colors.White);
+                    });
+
+                    // Content
+                    table.Cell().Padding(5).Text($"Shifting Service: {_job.PickupLocation} to {_job.DropoffLocation}");
+                    table.Cell().Padding(5).AlignCenter().Text("1");
+                    table.Cell().Padding(5).AlignRight().Text($"{_job.TotalCost:N2} LKR");
+                    table.Cell().Padding(5).AlignRight().Text($"{_job.TotalCost:N2} LKR");
+
+                    // Total
+                    table.Cell().ColumnSpan(3).AlignRight().PaddingTop(20).Text("Total Amount Due").Bold();
+                    table.Cell().AlignRight().PaddingTop(20).Text($"{_job.TotalCost:N2} LKR").Bold();
+                });
+
+                // --- Thank You Note ---
+                column.Item().PaddingTop(40).Text("Thank you for your business!").SemiBold();
+            });
+        }
+
+        void ComposeFooter(IContainer container)
+        {
+            container.AlignCenter().Text("E-Shift Movers - Your Trusted Partner");
+        }
+
+        private byte[] GetLogoFromResources()
+        {
+            try
+            {
+                using (var ms = new MemoryStream())
+                {
+                    var logoImage = Resources.e_shift_logo;
+                    logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                    return ms.ToArray();
+                }
+            }
+            catch { return Array.Empty<byte>(); }
         }
     }
 }

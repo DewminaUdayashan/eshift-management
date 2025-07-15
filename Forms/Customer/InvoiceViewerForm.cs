@@ -1,40 +1,55 @@
 ﻿using eshift_management.Models;
+using eshift_management.Services;
 using MaterialSkin.Controls;
-using System;
-using System.IO;
-using System.Windows.Forms;
 
 namespace eshift_management.Forms
 {
     public partial class InvoiceViewerForm : MaterialForm
     {
-        private readonly Job job;
+        private readonly Job _job;
+        private readonly PdfReportGenerator _pdfGenerator;
 
         public InvoiceViewerForm(Job jobToDisplay)
         {
             InitializeComponent();
-            this.job = jobToDisplay;
+            _job = jobToDisplay;
+            _pdfGenerator = new PdfReportGenerator();
 
-            // Set the form title and generate the invoice HTML
-            this.Text = $"Invoice for Job #{job.Id}";
-            webBrowserInvoice.DocumentText = GenerateInvoiceHtml();
+            // Set the form title and generate a styled HTML preview
+            this.Text = $"Invoice for Job #{_job.Id}";
+            webBrowserInvoice.DocumentText = GenerateInvoiceHtmlPreview();
         }
 
+        /// <summary>
+        /// Handles the click event for the save button. Generates and saves the invoice as a PDF.
+        /// </summary>
         private void buttonSave_Click(object sender, EventArgs e)
         {
+            byte[] pdfBytes;
+            try
+            {
+                // Generate the PDF using the dedicated service
+                pdfBytes = _pdfGenerator.GenerateInvoicePdf(_job);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to generate PDF: {ex.Message}", "PDF Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
-                Filter = "HTML File (*.html)|*.html",
+                Filter = "PDF File (*.pdf)|*.pdf",
                 Title = "Save Invoice",
-                FileName = $"Invoice-{job.Id}.html"
+                FileName = $"Invoice-{_job.Id}.pdf"
             };
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    File.WriteAllText(saveFileDialog.FileName, webBrowserInvoice.DocumentText);
-                    MessageBox.Show("Invoice saved successfully as an HTML file.\n\nYou can open this file in any web browser and use its 'Print' function to save it as a PDF.", "Invoice Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    File.WriteAllBytes(saveFileDialog.FileName, pdfBytes);
+                    MessageBox.Show("Invoice saved successfully as a PDF.", "Invoice Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -43,10 +58,13 @@ namespace eshift_management.Forms
             }
         }
 
-        private string GenerateInvoiceHtml()
+        /// <summary>
+        /// Generates a styled HTML preview of the invoice that mimics the PDF design.
+        /// </summary>
+        private string GenerateInvoiceHtmlPreview()
         {
-            string customerAddress = $"{job.Customer.AddressLine}<br/>{job.Customer.City}, {job.Customer.PostalCode}";
-            string serviceDescription = $"Shifting from {job.PickupLocation} to {job.DropoffLocation}";
+            string customerAddress = $"{_job.Customer.AddressLine}<br/>{_job.Customer.City}, {_job.Customer.PostalCode}";
+            string serviceDescription = $"Shifting from {_job.PickupLocation} to {_job.DropoffLocation}";
 
             return $@"
             <!DOCTYPE html>
@@ -58,12 +76,10 @@ namespace eshift_management.Forms
                     .invoice-box table {{ width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; }}
                     .invoice-box table td {{ padding: 5px; vertical-align: top; }}
                     .invoice-box table tr.top table td {{ padding-bottom: 20px; }}
-                    .invoice-box table tr.top table td.title {{ font-size: 45px; line-height: 45px; color: #333; }}
+                    .invoice-box table tr.top table td.title {{ font-size: 45px; line-height: 45px; color: #0D47A1; font-weight: bold; }}
                     .invoice-box table tr.information table td {{ padding-bottom: 40px; }}
                     .invoice-box table tr.heading td {{ background: #eee; border-bottom: 1px solid #ddd; font-weight: bold; }}
-                    .invoice-box table tr.details td {{ padding-bottom: 20px; }}
                     .invoice-box table tr.item td {{ border-bottom: 1px solid #eee; }}
-                    .invoice-box table tr.item.last td {{ border-bottom: none; }}
                     .invoice-box table tr.total td:nth-child(2) {{ border-top: 2px solid #eee; font-weight: bold; text-align: right;}}
                     .text-right {{ text-align: right; }}
                 </style>
@@ -77,9 +93,8 @@ namespace eshift_management.Forms
                                     <tr>
                                         <td class='title'>E-Shift</td>
                                         <td class='text-right'>
-                                            Invoice #: {job.Id}<br />
+                                            <b>Invoice #: {_job.Id}</b><br />
                                             Generated: {DateTime.Now:MMMM d, yyyy}<br />
-                                            Due: {job.PickupDate.AddDays(30):MMMM d, yyyy}
                                         </td>
                                     </tr>
                                 </table>
@@ -90,12 +105,13 @@ namespace eshift_management.Forms
                                 <table>
                                     <tr>
                                         <td>
-                                            E-Shift, Inc.<br />
+                                            <b>E-Shift Movers</b><br />
                                             123 Main Street<br />
                                             Panadura, Sri Lanka
                                         </td>
                                         <td class='text-right'>
-                                            <b>{job.Customer.FullName}</b><br />
+                                            <b>Bill To:</b><br />
+                                            {_job.Customer.FullName}<br />
                                             {customerAddress}
                                         </td>
                                     </tr>
@@ -108,11 +124,11 @@ namespace eshift_management.Forms
                         </tr>
                         <tr class='item'>
                             <td>{serviceDescription}</td>
-                            <td class='text-right'>{job.TotalCost:N2} LKR</td>
+                            <td class='text-right'>{_job.TotalCost:N2} LKR</td>
                         </tr>
                         <tr class='total'>
                             <td></td>
-                            <td>Total: {job.TotalCost:N2} LKR</td>
+                            <td>Total: {_job.TotalCost:N2} LKR</td>
                         </tr>
                     </table>
                 </div>
