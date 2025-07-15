@@ -6,7 +6,7 @@ namespace eshift_management.Models
     // Truck model
     public class Truck
     {
-        required public string Id { get; set; }
+        required public int Id { get; set; }
         required public string Model { get; set; }
         required public string LicensePlate { get; set; }
         required public ResourceStatus Status { get; set; }
@@ -15,7 +15,7 @@ namespace eshift_management.Models
     // Model to handle both Drivers and Assistants
     public class Employee
     {
-        required public string Id { get; set; }
+        required public int Id { get; set; }
         required public string FirstName { get; set; }
         required public string LastName { get; set; }
         required public EmployeePosition Position { get; set; }

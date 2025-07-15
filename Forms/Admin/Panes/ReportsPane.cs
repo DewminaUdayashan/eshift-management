@@ -46,17 +46,17 @@ namespace eshift_management.Panes
             // Trucks
             _trucks = new List<Truck>
             {
-                new Truck { Id = "TRK-01", Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available },
-                new Truck { Id = "TRK-02", Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned }
+                new Truck { Id = 1, Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available },
+                new Truck { Id = 2, Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned }
             };
 
             // Employees
             _employees = new List<Employee>
             {
-                new Employee { Id = "EMP-01", FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, Status = ResourceStatus.Assigned, ContactNumber = "071-111", LicenseNumber = "B123456" },
-                new Employee { Id = "EMP-02", FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, Status = ResourceStatus.Available, ContactNumber = "077-222", LicenseNumber = "B789012" },
-                new Employee { Id = "EMP-03", FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, Status = ResourceStatus.Assigned, ContactNumber = "071-333", LicenseNumber = "N/A" },
-                new Employee { Id = "EMP-04", FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, Status = ResourceStatus.Available, ContactNumber = "077-444", LicenseNumber = "N/A" }
+                new Employee { Id =1, FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, Status = ResourceStatus.Assigned, ContactNumber = "071-111", LicenseNumber = "B123456" },
+                new Employee { Id = 2, FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, Status = ResourceStatus.Available, ContactNumber = "077-222", LicenseNumber = "B789012" },
+                new Employee { Id = 3, FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, Status = ResourceStatus.Assigned, ContactNumber = "071-333", LicenseNumber = "N/A" },
+                new Employee { Id = 4, FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, Status = ResourceStatus.Available, ContactNumber = "077-444", LicenseNumber = "N/A" }
             };
 
             // Transport Units

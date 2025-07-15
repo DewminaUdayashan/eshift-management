@@ -1,109 +1,78 @@
-﻿using eshift_management.Models;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+﻿using eshift_management.Core.Services;
+using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Services;
 
 namespace eshift_management.Panes
 {
     public partial class TransportUnitsPane : UserControl
     {
-        private List<TransportUnit> allUnits;
-        private List<Truck> allTrucks;
-        private List<Employee> allEmployees;
+        private readonly ITransportUnitService _unitService;
+        private readonly ITruckService _truckService;
+        private readonly IEmployeeService _employeeService;
 
         public TransportUnitsPane()
         {
             InitializeComponent();
             SetupDataGridView();
-            LoadDummyData();
+
+            var unitRepo = new TransportUnitRepository();
+            var truckRepo = new TruckRepository();
+            var employeeRepo = new EmployeeRepository();
+
+            _unitService = new TransportUnitService(unitRepo, truckRepo, employeeRepo);
+            _truckService = new TruckService(truckRepo);
+            _employeeService = new EmployeeService(employeeRepo);
+
+            // Load initial data asynchronously.
+            _ = LoadUnitsAsync();
+        }
+
+        private async Task LoadUnitsAsync()
+        {
+            try
+            {
+                var units = await _unitService.GetAllTransportUnitsAsync();
+                UpdateGridDisplay(units.ToList());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load transport units: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void SetupDataGridView()
         {
             dataGridViewUnits.AutoGenerateColumns = false;
             dataGridViewUnits.Columns.Clear();
-
             AddGridColumn("Id", "Unit ID");
             AddGridColumn("UnitName", "Unit Name");
+            // These columns will be populated manually, so DataPropertyName is not needed.
             AddGridColumn("TruckInfo", "Truck");
             AddGridColumn("DriverInfo", "Driver");
             AddGridColumn("AssistantInfo", "Assistant");
             AddGridColumn("Status", "Status");
-
-            var editButtonColumn = new DataGridViewButtonColumn
-            {
-                Name = "Edit",
-                Text = "Edit",
-                UseColumnTextForButtonValue = true,
-                HeaderText = "Actions",
-                FlatStyle = FlatStyle.Flat,
-                Width = 80,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.None
-            };
-            editButtonColumn.DefaultCellStyle.BackColor = Color.FromArgb(0, 123, 255);
-            editButtonColumn.DefaultCellStyle.ForeColor = Color.White;
-            dataGridViewUnits.Columns.Add(editButtonColumn);
-
-            var deleteButtonColumn = new DataGridViewButtonColumn
-            {
-                Name = "Delete",
-                Text = "Delete",
-                UseColumnTextForButtonValue = true,
-                HeaderText = "",
-                FlatStyle = FlatStyle.Flat,
-                Width = 80,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.None
-            };
-            deleteButtonColumn.DefaultCellStyle.BackColor = Color.IndianRed;
-            deleteButtonColumn.DefaultCellStyle.ForeColor = Color.White;
-            dataGridViewUnits.Columns.Add(deleteButtonColumn);
+            // Add action buttons
+            var editButton = new DataGridViewButtonColumn { Name = "Edit", Text = "Edit", UseColumnTextForButtonValue = true, HeaderText = "Actions", FlatStyle = FlatStyle.Flat, Width = 80, AutoSizeMode = DataGridViewAutoSizeColumnMode.None };
+            editButton.DefaultCellStyle.BackColor = Color.FromArgb(0, 123, 255);
+            editButton.DefaultCellStyle.ForeColor = Color.White;
+            dataGridViewUnits.Columns.Add(editButton);
+            var deleteButton = new DataGridViewButtonColumn { Name = "Delete", Text = "Delete", UseColumnTextForButtonValue = true, HeaderText = "", FlatStyle = FlatStyle.Flat, Width = 80, AutoSizeMode = DataGridViewAutoSizeColumnMode.None };
+            deleteButton.DefaultCellStyle.BackColor = Color.IndianRed;
+            deleteButton.DefaultCellStyle.ForeColor = Color.White;
+            dataGridViewUnits.Columns.Add(deleteButton);
         }
 
-        private void AddGridColumn(string dataPropertyName, string headerText)
+        private void AddGridColumn(string name, string headerText)
         {
-            var column = new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = dataPropertyName,
-                Name = dataPropertyName,
-                HeaderText = headerText,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-            };
+            var column = new DataGridViewTextBoxColumn { Name = name, HeaderText = headerText, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill };
             dataGridViewUnits.Columns.Add(column);
         }
 
-        private void LoadDummyData()
+        private void UpdateGridDisplay(List<TransportUnit> units)
         {
-            // In a real app, this data would come from a database
-            allTrucks = new List<Truck>
-            {
-                new Truck { Id = "TRK-01", Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available },
-                new Truck { Id = "TRK-02", Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned },
-                new Truck { Id = "TRK-03", Model = "Fuso Fighter", LicensePlate = "CAA-9101", Status = ResourceStatus.Available }
-            };
-            allEmployees = new List<Employee>
-            {
-                new Employee { Id = "EMP-01", FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, ContactNumber="071-1112222", LicenseNumber = "B123456", Status = ResourceStatus.Assigned },
-                new Employee { Id = "EMP-02", FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, ContactNumber="077-2223333", LicenseNumber = "B789012", Status = ResourceStatus.Available },
-                new Employee { Id = "EMP-03", FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned },
-                new Employee { Id = "EMP-04", FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available }
-            };
-
-            allUnits = new List<TransportUnit>
-            {
-                new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = allTrucks[1], Driver = allEmployees[0], Assistant = allEmployees[2], Status = ResourceStatus.Assigned, AssignedJobId = "JOB-101" },
-                new TransportUnit { Id = 2, UnitName = "Team Bravo", Truck = allTrucks[0], Driver = allEmployees[1], Assistant = allEmployees[3], Status = ResourceStatus.Available, AssignedJobId = "" }
-            };
-
-            UpdateGridDisplay();
-        }
-
-        private void UpdateGridDisplay()
-        {
-            // This method now dynamically creates row data for better object access
             dataGridViewUnits.Rows.Clear();
-            foreach (var unit in allUnits)
+            foreach (var unit in units)
             {
                 int rowIndex = dataGridViewUnits.Rows.Add(
                     unit.Id,
@@ -113,50 +82,44 @@ namespace eshift_management.Panes
                     unit.Assistant.FullName,
                     unit.Status
                 );
-                // Store the actual unit object in the row's tag for easy access
                 dataGridViewUnits.Rows[rowIndex].Tag = unit;
             }
         }
 
-        private void buttonAddNew_Click(object sender, EventArgs e)
+        private async void buttonAddNew_Click(object sender, EventArgs e)
         {
-            // Get all available resources
-            var trucks = allTrucks.Where(t => t.Status == ResourceStatus.Available).ToList();
-            var drivers = allEmployees.Where(emp => emp.Position == EmployeePosition.Driver && emp.Status == ResourceStatus.Available).ToList();
-            var assistants = allEmployees.Where(emp => emp.Position == EmployeePosition.Assistant && emp.Status == ResourceStatus.Available).ToList();
-
-            using (var form = new AddEditUnitForm(trucks, drivers, assistants))
+            try
             {
-                if (form.ShowDialog() == DialogResult.OK)
+                // Fetch all available resources from the database.
+                var availableTrucks = (await _truckService.GetTrucksByStatusAsync(ResourceStatus.Available)).ToList();
+                var availableDrivers = (await _employeeService.GetEmployeesByPositionAsync(EmployeePosition.Driver)).Where(d => d.Status == ResourceStatus.Available).ToList();
+                var availableAssistants = (await _employeeService.GetEmployeesByPositionAsync(EmployeePosition.Assistant)).Where(a => a.Status == ResourceStatus.Available).ToList();
+
+                using (var form = new AddEditUnitForm(availableTrucks, availableDrivers, availableAssistants))
                 {
-                    var newUnit = form.TheUnit;
-
-                    // Mark resources as assigned
-                    newUnit.Truck.Status = ResourceStatus.Assigned;
-                    newUnit.Driver.Status = ResourceStatus.Assigned;
-                    newUnit.Assistant.Status = ResourceStatus.Assigned;
-
-                    allUnits.Add(newUnit);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Transport unit successfully created.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        await _unitService.CreateTransportUnitAsync(form.TheUnit);
+                        await LoadUnitsAsync(); // Refresh grid
+                        MessageBox.Show("Transport unit successfully created.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error preparing to add unit: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void dataGridViewUnits_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            // This event fires just before a cell is painted
             if (e.RowIndex < 0) return;
+            bool isActionColumn = dataGridViewUnits.Columns[e.ColumnIndex].Name == "Edit" || dataGridViewUnits.Columns[e.ColumnIndex].Name == "Delete";
+            if (!isActionColumn) return;
 
-            // Check if we are in a button column
-            bool isButtonColumn = dataGridViewUnits.Columns[e.ColumnIndex].Name == "Edit" || dataGridViewUnits.Columns[e.ColumnIndex].Name == "Delete";
-            if (!isButtonColumn) return;
-
-            // Get the unit for the current row
             var unit = dataGridViewUnits.Rows[e.RowIndex].Tag as TransportUnit;
             if (unit != null && unit.Status == ResourceStatus.Assigned)
             {
-                // If the unit is assigned, "disable" the button by changing its style
                 var buttonCell = (DataGridViewButtonCell)dataGridViewUnits.Rows[e.RowIndex].Cells[e.ColumnIndex];
                 buttonCell.FlatStyle = FlatStyle.Popup;
                 buttonCell.Style.BackColor = Color.LightGray;
@@ -165,38 +128,37 @@ namespace eshift_management.Panes
             }
         }
 
-        private void dataGridViewUnits_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dataGridViewUnits_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
-
             var unit = dataGridViewUnits.Rows[e.RowIndex].Tag as TransportUnit;
-            if (unit == null || unit.Status == ResourceStatus.Assigned)
-            {
-                // If the unit is assigned, do not allow any action
-                return;
-            }
+            if (unit == null || unit.Status == ResourceStatus.Assigned) return;
 
             // Handle Edit
             if (dataGridViewUnits.Columns[e.ColumnIndex].Name == "Edit")
             {
-                // Get lists of available resources, BUT also include the resources from the unit we are editing
-                var trucks = allTrucks.Where(t => t.Status == ResourceStatus.Available || t.Id == unit.Truck.Id).ToList();
-                var drivers = allEmployees.Where(emp => (emp.Position == EmployeePosition.Driver && emp.Status == ResourceStatus.Available) || emp.Id == unit.Driver.Id).ToList();
-                var assistants = allEmployees.Where(emp => (emp.Position == EmployeePosition.Assistant && emp.Status == ResourceStatus.Available) || emp.Id == unit.Assistant.Id).ToList();
-
-                using (var form = new AddEditUnitForm(trucks, drivers, assistants, unit))
+                try
                 {
-                    if (form.ShowDialog() == DialogResult.OK)
+                    var trucks = (await _truckService.GetTrucksByStatusAsync(ResourceStatus.Available)).ToList();
+                    trucks.Add(unit.Truck); // Add the current truck back to the list
+                    var drivers = (await _employeeService.GetEmployeesByStatusAsync(ResourceStatus.Available)).Where(d => d.Position == EmployeePosition.Driver).ToList();
+                    drivers.Add(unit.Driver);
+                    var assistants = (await _employeeService.GetEmployeesByStatusAsync(ResourceStatus.Available)).Where(a => a.Position == EmployeePosition.Assistant).ToList();
+                    assistants.Add(unit.Assistant);
+
+                    using (var form = new AddEditUnitForm(trucks, drivers, assistants, unit))
                     {
-                        // In a real app, update the database. For now, update our in-memory list.
-                        int index = allUnits.FindIndex(u => u.Id == unit.Id);
-                        if (index != -1)
+                        if (form.ShowDialog() == DialogResult.OK)
                         {
-                            allUnits[index] = form.TheUnit;
+                            await _unitService.UpdateTransportUnitAsync(form.TheUnit);
+                            await LoadUnitsAsync();
+                            MessageBox.Show("Unit updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        UpdateGridDisplay();
-                        MessageBox.Show("Unit updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error preparing to edit unit: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             // Handle Delete
@@ -204,14 +166,16 @@ namespace eshift_management.Panes
             {
                 if (MessageBox.Show($"Are you sure you want to delete '{unit.UnitName}'?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
-                    // Mark resources as available again
-                    unit.Truck.Status = ResourceStatus.Available;
-                    unit.Driver.Status = ResourceStatus.Available;
-                    unit.Assistant.Status = ResourceStatus.Available;
-
-                    allUnits.Remove(unit);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Unit deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    try
+                    {
+                        await _unitService.DeleteTransportUnitAsync(unit.Id);
+                        await LoadUnitsAsync();
+                        MessageBox.Show("Unit deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to delete unit: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
