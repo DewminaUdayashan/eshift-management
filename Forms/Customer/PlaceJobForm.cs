@@ -12,7 +12,7 @@ namespace eshift_management.Forms
         private readonly CustomerModel currentCustomer;
         private readonly Job currentJob;
         private readonly bool isEditMode;
-        private readonly IJobService jobService;
+        private readonly ICustomerJobService jobService;
 
         public Job TheJob { get; private set; }
 
@@ -22,7 +22,7 @@ namespace eshift_management.Forms
 
             this.currentCustomer = user;
             this.currentJob = jobToEdit;
-            this.jobService = new JobService(new JobRepository());
+            this.jobService = new JobService(new JobRepository(), new TransportUnitRepository());
             this.isEditMode = (currentJob != null);
 
             SetupForm();

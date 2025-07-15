@@ -12,7 +12,7 @@ namespace eshift_management.Panes
 {
     public partial class CustomerJobsPane : UserControl
     {
-        private readonly IJobService _jobService;
+        private readonly ICustomerJobService _jobService;
         private readonly ICustomerService _customerService;
         private List<Job> allJobs;
         private Job? selectedJob;
@@ -22,7 +22,7 @@ namespace eshift_management.Panes
         public CustomerJobsPane(UserModel user)
         {
             InitializeComponent();
-            _jobService = new JobService(new JobRepository());
+            _jobService = new JobService(new JobRepository(), new TransportUnitRepository());
             _customerService = new CustomerService(new CustomerRepository());
             this.user = user;
             SetupGrid();

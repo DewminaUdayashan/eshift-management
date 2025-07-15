@@ -1,102 +1,86 @@
-﻿using eshift_management.Forms;
+﻿using eshift_management.Core.Services;
+using eshift_management.Forms;
 using eshift_management.Models;
+using eshift_management.Repositories;
+using eshift_management.Services;
 using eshift_management.UI;
 
 namespace eshift_management.Panes
 {
     public partial class JobsPane : UserControl
     {
-        private List<Job> allJobs;
-        private List<TransportUnit> allUnits;
-        private Job selectedJob;
+        private readonly IAdminJobService _jobService;
+        private readonly ITransportUnitService _unitService;
+        private Job _selectedJob;
 
         public JobsPane()
         {
             InitializeComponent();
+
+            // In a real app with DI, these would be injected.
+            var jobRepo = new JobRepository();
+            var unitRepo = new TransportUnitRepository();
+            var truckRepo = new TruckRepository(); // Needed by Unit Repo
+            var empRepo = new EmployeeRepository(); // Needed by Unit Repo
+
+            _unitService = new TransportUnitService(unitRepo, truckRepo, empRepo);
+            _jobService = new JobService(jobRepo, unitRepo);
+
             SetupGrid();
-            LoadDummyData();
             PopulateFilter();
-            // Show placeholder initially
-            DisplayJobDetails(null);
+            DisplayJobDetails(null); // Show placeholder initially
+            _ = LoadJobsAsync(); // Load initial data
         }
 
+        private async Task LoadJobsAsync()
+        {
+            try
+            {
+                var filter = new Dictionary<string, object>();
+
+                // Status Filter
+                if (comboBoxStatusFilter.SelectedItem.ToString() != "All")
+                {
+                    filter.Add("Status", comboBoxStatusFilter.SelectedItem.ToString());
+                }
+
+                // You can add SearchTerm and Date filters here later if needed.
+
+                var jobs = await _jobService.GetAllJobsAsync(filter, orderBy: "PickupDate", isAscending: true);
+
+                dataGridViewJobs.DataSource = jobs.Select(j => new
+                {
+                    j.Id,
+                    CustomerName = j.Customer.FullName,
+                    j.PickupDate,
+                    j.Status
+                }).ToList();
+
+                // After reloading, clear the selection and details pane
+                DisplayJobDetails(null);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load jobs: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        #region Setup and Display Logic
         private void SetupGrid()
         {
-            // Subscribe to the CellPainting event for custom drawing
             dataGridViewJobs.CellPainting += dataGridViewJobs_CellPainting;
-
             dataGridViewJobs.AutoGenerateColumns = false;
             dataGridViewJobs.Columns.Clear();
             AddGridColumn("Id", "Job ID");
             AddGridColumn("CustomerName", "Customer");
             AddGridColumn("PickupDate", "Pickup Date");
-            AddGridColumn("Status", "Status"); // The column whose cells we will custom paint
+            AddGridColumn("Status", "Status");
         }
+
         private void AddGridColumn(string dataPropertyName, string headerText)
         {
-            var column = new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = dataPropertyName,
-                Name = dataPropertyName,
-                HeaderText = headerText,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-            };
+            var column = new DataGridViewTextBoxColumn { DataPropertyName = dataPropertyName, Name = dataPropertyName, HeaderText = headerText, AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill };
             dataGridViewJobs.Columns.Add(column);
-        }
-
-
-        private void dataGridViewJobs_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            // Check if we are in the "Status" column and not in the header row
-            if (e.ColumnIndex == dataGridViewJobs.Columns["Status"].Index && e.RowIndex >= 0)
-            {
-                // Prevent the default paint
-                e.Handled = true;
-
-                // Paint the cell background
-                e.PaintBackground(e.CellBounds, true);
-
-                // Get the Job object for the current row
-                var jobId = dataGridViewJobs.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-                var job = allJobs.FirstOrDefault(j => j.Id.ToString() == jobId);
-
-                if (job != null)
-                {
-                    // Call our reusable helper to draw the chip
-                    ControlHelpers.DrawStatusChip(e.Graphics, e.CellBounds, job.Status);
-                }
-            }
-        }
-
-
-        private void LoadDummyData()
-        {
-            var cust1 = new CustomerModel { Id = 1, UserId = 0, FirstName = "John", LastName = "Smith", Email = "j.s@mail.com", Phone = "111", AddressLine = "1", City = "1", PostalCode = "1" };
-            var cust2 = new CustomerModel { Id = 2, UserId = 0, FirstName = "Jane", LastName = "Doe", Email = "j.d@mail.com", Phone = "222", AddressLine = "2", City = "2", PostalCode = "2" };
-            var cust3 = new CustomerModel { Id = 3, UserId = 0, FirstName = "Peter", LastName = "Jones", Email = "p.j@mail.com", Phone = "333", AddressLine = "3", City = "3", PostalCode = "3" };
-            var cust4 = new CustomerModel { Id = 4, UserId = 0, FirstName = "Mary", LastName = "Johnson", Email = "m.j@mail.com", Phone = "444", AddressLine = "4", City = "4", PostalCode = "4" };
-
-            var truck1 = new Truck { Id = 1, Model = "Isuzu Elf", LicensePlate = "CBA-1234", Status = ResourceStatus.Available };
-            var truck2 = new Truck { Id = 2, Model = "Mitsubishi Canter", LicensePlate = "CAB-5678", Status = ResourceStatus.Assigned };
-            var driver1 = new Employee { Id = 3, FirstName = "Kamal", LastName = "Perera", Position = EmployeePosition.Driver, ContactNumber = "071-1112222", LicenseNumber = "B123456", Status = ResourceStatus.Assigned };
-            var driver2 = new Employee { Id = 4, FirstName = "Nimal", LastName = "Silva", Position = EmployeePosition.Driver, ContactNumber = "077-2223333", LicenseNumber = "B789012", Status = ResourceStatus.Available };
-            var assistant1 = new Employee { Id = 5, FirstName = "Sunil", LastName = "Fernando", Position = EmployeePosition.Assistant, ContactNumber = "077-1234567", LicenseNumber = "N/A", Status = ResourceStatus.Assigned };
-            var assistant2 = new Employee { Id = 6, FirstName = "Jagath", LastName = "Zoysa", Position = EmployeePosition.Assistant, ContactNumber = "071-7654321", LicenseNumber = "N/A", Status = ResourceStatus.Available };
-
-            var assignedUnit = new TransportUnit { Id = 1, UnitName = "Team Alpha", Truck = truck2, Driver = driver1, Assistant = assistant1, Status = ResourceStatus.Assigned, AssignedJobId = "JOB-003" };
-            var availableUnit = new TransportUnit { Id = 2, UnitName = "Team Bravo", Truck = truck1, Driver = driver2, Assistant = assistant2, Status = ResourceStatus.Available, AssignedJobId = "" };
-
-            allUnits = new List<TransportUnit> { assignedUnit, availableUnit };
-
-            allJobs = new List<Job>
-            {
-                 new Job { Id = 1, Customer = cust1, PickupLocation = "Colombo", DropoffLocation = "Kandy", PickupDate = DateTime.Now.AddDays(5), LoadSize = "Medium (3-4 rooms)", Description = "Handle with care, many fragile items.", Status = JobStatus.Pending, AssignedUnit = null, TotalCost=0, EstimatedHours=0, RejectionReason="" },
-                 new Job { Id = 2, Customer = cust2, PickupLocation = "Galle", DropoffLocation = "Jaffna", PickupDate = DateTime.Now.AddDays(10), LoadSize = "Large (5+ rooms)", Description = "Requires piano transport.", Status = JobStatus.Approved, TotalCost = 75000, EstimatedHours = 12, AssignedUnit=null, RejectionReason=""},
-                 new Job { Id = 3, Customer = cust3, PickupLocation = "Negombo", DropoffLocation = "Trincomalee", PickupDate = DateTime.Now.AddDays(2), LoadSize = "Small (1-2 rooms)", Description = "Studio apartment move.", Status = JobStatus.Scheduled, AssignedUnit = assignedUnit, TotalCost = 40000, EstimatedHours = 8, RejectionReason=""},
-                 new Job { Id = 4, Customer = cust4, PickupLocation = "Matara", DropoffLocation = "Batticaloa", PickupDate = DateTime.Now, LoadSize = "Medium (3-4 rooms)", Description = "", Status = JobStatus.OnGoing, AssignedUnit = assignedUnit, TotalCost = 60000, EstimatedHours = 10, RejectionReason=""},
-                 new Job { Id = 5, Customer = cust1, PickupLocation = "Kalutara", DropoffLocation = "Anuradhapura", PickupDate = DateTime.Now.AddDays(-10), LoadSize = "Small (1-2 rooms)", Description = "Completed job.", Status = JobStatus.Completed, AssignedUnit = assignedUnit, TotalCost = 35000, EstimatedHours = 7, RejectionReason=""},
-                 new Job { Id = 6, Customer = cust2, PickupLocation = "Ratnapura", DropoffLocation = "Galle", PickupDate = DateTime.Now.AddDays(8), LoadSize = "Large (5+ rooms)", Description = "Canceled by admin.", Status = JobStatus.Canceled, TotalCost = 0, EstimatedHours = 0, AssignedUnit=null, RejectionReason=""},
-            };
         }
 
         private void PopulateFilter()
@@ -107,27 +91,9 @@ namespace eshift_management.Panes
             comboBoxStatusFilter.SelectedIndex = 0;
         }
 
-        private void UpdateGridDisplay()
-        {
-            if (allJobs == null || comboBoxStatusFilter.SelectedItem == null) return;
-            IEnumerable<Job> filteredJobs = allJobs;
-            if (comboBoxStatusFilter.SelectedItem.ToString() != "All")
-            {
-                var selectedStatus = (JobStatus)Enum.Parse(typeof(JobStatus), comboBoxStatusFilter.SelectedItem.ToString());
-                filteredJobs = filteredJobs.Where(j => j.Status == selectedStatus);
-            }
-            filteredJobs = filteredJobs.OrderBy(j => j.PickupDate);
-            dataGridViewJobs.DataSource = filteredJobs.Select(j => new
-            {
-                j.Id,
-                CustomerName = j.Customer.FullName,
-                j.PickupDate,
-                j.Status
-            }).ToList();
-        }
-
         private void DisplayJobDetails(Job job)
         {
+            _selectedJob = job;
             if (job == null)
             {
                 panelDetails.Visible = false;
@@ -135,25 +101,23 @@ namespace eshift_management.Panes
                 panelPlaceholder.Visible = true;
                 return;
             }
+
             panelDetails.Visible = true;
             panelActions.Visible = true;
             panelPlaceholder.Visible = false;
-            selectedJob = job;
+
             labelCustomerName.Text = job.Customer.FullName;
             labelPickup.Text = $"{job.PickupLocation} on {job.PickupDate:D}";
             labelDropoff.Text = job.DropoffLocation;
             labelLoadSize.Text = job.LoadSize;
             textBoxDescription.Text = job.Description;
-            labelAssignedUnitValue.Text = job.AssignedUnit != null ? $"{job.AssignedUnit.UnitName} ({job.AssignedUnit.Truck.LicensePlate})" : "N/A";
+            labelAssignedUnitValue.Text = job.AssignedUnit != null ? $"{job.AssignedUnit.UnitName} ({job.AssignedUnit.Id})" : "N/A";
             UpdateActionButtons(job.Status);
         }
 
         private void UpdateActionButtons(JobStatus status)
         {
-            foreach (var button in panelActions.Controls.OfType<MaterialSkin.Controls.MaterialButton>())
-            {
-                button.Visible = false;
-            }
+            panelActions.Controls.OfType<Control>().ToList().ForEach(c => c.Visible = false);
             switch (status)
             {
                 case JobStatus.Pending:
@@ -176,14 +140,24 @@ namespace eshift_management.Panes
                     break;
             }
         }
+        #endregion
 
-        private void dataGridViewJobs_SelectionChanged(object sender, EventArgs e)
+        #region Event Handlers
+        private async void dataGridViewJobs_SelectionChanged(object sender, EventArgs e)
         {
             if (dataGridViewJobs.SelectedRows.Count > 0)
             {
-                var jobId = dataGridViewJobs.SelectedRows[0].Cells["Id"].Value.ToString();
-                var job = allJobs.FirstOrDefault(j => j.Id.ToString() == jobId);
-                DisplayJobDetails(job);
+                try
+                {
+                    int jobId = (int)dataGridViewJobs.SelectedRows[0].Cells["Id"].Value;
+                    var job = await _jobService.GetJobByIdAsync(jobId);
+                    DisplayJobDetails(job);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error fetching job details: {ex.Message}", "Error");
+                    DisplayJobDetails(null);
+                }
             }
             else
             {
@@ -191,97 +165,92 @@ namespace eshift_management.Panes
             }
         }
 
-        private void comboBoxStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private async void comboBoxStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
-            UpdateGridDisplay();
+            await LoadJobsAsync();
         }
 
-        private void buttonAccept_Click(object sender, EventArgs e)
+        private async void buttonAccept_Click(object sender, EventArgs e)
         {
             using (var form = new AcceptJobForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    selectedJob.Status = JobStatus.Approved;
-                    selectedJob.TotalCost = form.TotalCost;
-                    selectedJob.EstimatedHours = form.EstimatedHours;
-                    UpdateGridDisplay();
-                    DisplayJobDetails(selectedJob);
+                    await _jobService.ApproveJobAsync(_selectedJob.Id, form.TotalCost, form.EstimatedHours);
+                    await LoadJobsAsync();
                     MessageBox.Show("Job has been approved.");
                 }
             }
         }
 
-        private void buttonReject_Click(object sender, EventArgs e)
+        private async void buttonReject_Click(object sender, EventArgs e)
         {
             using (var form = new RejectJobForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    selectedJob.Status = JobStatus.Rejected;
-                    selectedJob.RejectionReason = form.RejectionReason;
-                    UpdateGridDisplay();
-                    DisplayJobDetails(selectedJob);
+                    await _jobService.RejectJobAsync(_selectedJob.Id, form.RejectionReason);
+                    await LoadJobsAsync();
                     MessageBox.Show("Job has been rejected.");
                 }
             }
         }
 
-        private void buttonAssignOrChangeUnit_Click(object sender, EventArgs e)
+        private async void buttonAssignOrChangeUnit_Click(object sender, EventArgs e)
         {
-            var availableUnits = allUnits.Where(u => u.Status == ResourceStatus.Available).ToList();
-            if (selectedJob.AssignedUnit != null)
+            var availableUnits = (await _unitService.GetTransportUnitsByStatusAsync(ResourceStatus.Available)).ToList();
+            if (_selectedJob.AssignedUnit != null)
             {
-                availableUnits.Add(selectedJob.AssignedUnit);
+                availableUnits.Add(_selectedJob.AssignedUnit);
             }
+
             using (var form = new AssignUnitForm(availableUnits))
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    if (selectedJob.AssignedUnit != null)
-                    {
-                        selectedJob.AssignedUnit.Status = ResourceStatus.Available;
-                    }
-                    selectedJob.Status = JobStatus.Scheduled;
-                    selectedJob.AssignedUnit = form.SelectedUnit;
-                    selectedJob.AssignedUnit.Status = ResourceStatus.Assigned;
-                    UpdateGridDisplay();
-                    DisplayJobDetails(selectedJob);
+                    await _jobService.AssignTransportUnitAsync(_selectedJob.Id, form.SelectedUnit.Id);
+                    await LoadJobsAsync();
                     MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been assigned.");
                 }
             }
         }
 
-        private void buttonDispatch_Click(object sender, EventArgs e)
+        private async void buttonDispatch_Click(object sender, EventArgs e)
         {
-            selectedJob.Status = JobStatus.OnGoing;
-            UpdateGridDisplay();
-            DisplayJobDetails(selectedJob);
+            await _jobService.DispatchJobAsync(_selectedJob.Id);
+            await LoadJobsAsync();
             MessageBox.Show("Job has been dispatched and is now On-Going.");
         }
 
-        private void buttonComplete_Click(object sender, EventArgs e)
+        private async void buttonComplete_Click(object sender, EventArgs e)
         {
-            selectedJob.Status = JobStatus.Completed;
-            selectedJob.AssignedUnit.Status = ResourceStatus.Available;
-            UpdateGridDisplay();
-            DisplayJobDetails(selectedJob);
+            await _jobService.CompleteJobAsync(_selectedJob.Id);
+            await LoadJobsAsync();
             MessageBox.Show("Job has been marked as Completed.");
         }
 
-        private void buttonCancel_Click(object sender, EventArgs e)
+        private async void buttonCancel_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show("Are you sure you want to cancel this job?", "Confirm Cancellation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                selectedJob.Status = JobStatus.Canceled;
-                if (selectedJob.AssignedUnit != null)
-                {
-                    selectedJob.AssignedUnit.Status = ResourceStatus.Available;
-                }
-                UpdateGridDisplay();
-                DisplayJobDetails(selectedJob);
+                await _jobService.CancelJobAsync(_selectedJob.Id);
+                await LoadJobsAsync();
                 MessageBox.Show("Job has been canceled.");
             }
         }
+
+        private void dataGridViewJobs_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridViewJobs.Columns["Status"].Index && e.RowIndex >= 0 && e.Value != null)
+            {
+                e.Handled = true;
+                e.PaintBackground(e.CellBounds, true);
+                if (Enum.TryParse(e.Value.ToString(), out JobStatus status))
+                {
+                    ControlHelpers.DrawStatusChip(e.Graphics, e.CellBounds, status);
+                }
+            }
+        }
+        #endregion
     }
 }
