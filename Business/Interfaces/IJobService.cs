@@ -47,7 +47,7 @@ namespace eshift_management.Core.Services
         /// </summary>
         /// <param name="jobId">The ID of the job.</param>
         /// <param name="unitId">The ID of the transport unit to assign.</param>
-        Task AssignTransportUnitAsync(int jobId, int unitId);
+        Task AssignTransportUnitAsync(int jobId, int unitId, bool forceAssignment = false);
 
         /// <summary>
         /// Dispatches a scheduled job, changing its status to 'OnGoing'.

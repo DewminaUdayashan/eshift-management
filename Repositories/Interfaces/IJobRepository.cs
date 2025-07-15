@@ -37,5 +37,14 @@ namespace eshift_management.Core.Repositories
         /// <param name="status">The new job status.</param>
         /// <param name="rejectionReason">Optional rejection reason (used when status is Rejected).</param>
         Task UpdateJobStatusAsync(int jobId, JobStatus status, string? rejectionReason = null);
+
+
+        /// <summary>
+        /// Checks if a transport unit is scheduled on a specific date.
+        /// </summary>
+        /// <param name="date">The date that needs to be checked</param>
+        /// <param name="unitId">Transport unit ID</param>
+        /// <param name="excludeJobId">Job ID if needs to be excluded</param>
+        Task<bool> IsUnitScheduledOnDateAsync(int unitId, DateTime date, int? excludeJobId = null);
     }
 }

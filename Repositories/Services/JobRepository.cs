@@ -169,5 +169,22 @@ namespace eshift_management.Repositories
             const string sql = @"UPDATE jobs SET status = @Status, rejection_reason = @Reason WHERE id = @JobId;";
             await DbExecutor.ExecuteAsync(sql, new { JobId = jobId, Status = status.ToString(), Reason = rejectionReason });
         }
+
+        public async Task<bool> IsUnitScheduledOnDateAsync(int unitId, DateTime date, int? excludeJobId = null)
+        {
+            var sqlBuilder = new StringBuilder("SELECT COUNT(*) FROM jobs WHERE transport_unit_id = @UnitId AND DATE(pickup_date) = DATE(@Date)");
+            var parameters = new DynamicParameters();
+            parameters.Add("UnitId", unitId);
+            parameters.Add("Date", date);
+
+            if (excludeJobId.HasValue)
+            {
+                sqlBuilder.Append(" AND id != @ExcludeJobId");
+                parameters.Add("ExcludeJobId", excludeJobId.Value);
+            }
+
+            var count = await DbExecutor.ExecuteScalarAsync<int>(sqlBuilder.ToString(), parameters);
+            return count > 0;
+        }
     }
 }

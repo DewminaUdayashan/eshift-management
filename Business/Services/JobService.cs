@@ -1,4 +1,5 @@
-﻿using eshift_management.Core.Repositories;
+﻿using eshift_management.Core.Exceptions;
+using eshift_management.Core.Repositories;
 using eshift_management.Core.Services;
 using eshift_management.Models;
 
@@ -50,13 +51,21 @@ namespace eshift_management.Services
             await _jobRepository.UpdateJobStatusAsync(jobId, JobStatus.Rejected, reason);
         }
 
-        public async Task AssignTransportUnitAsync(int jobId, int unitId)
+        public async Task AssignTransportUnitAsync(int jobId, int unitId, bool forceAssignment = false)
         {
             var job = await _jobRepository.GetByIdAsync(jobId) ?? throw new KeyNotFoundException("Job not found.");
             var unit = await _unitRepository.GetByIdAsync(unitId) ?? throw new KeyNotFoundException("Unit not found.");
 
-            if (job.Status != JobStatus.Approved && job.Status != JobStatus.Scheduled)
-                throw new InvalidOperationException("A unit can only be assigned to an approved or already scheduled job.");
+           
+            if (!forceAssignment)
+            {
+                /// Ensure the unit is not already scheduled for another job on the same date.
+                bool isConflict = await _jobRepository.IsUnitScheduledOnDateAsync(unitId, job.PickupDate, job.Id);
+                if (isConflict)
+                {
+                    throw new UnitConflictException($"This unit is already scheduled for another job on {job.PickupDate:d}.");
+                }
+            }
 
             if (unit.Status != ResourceStatus.Available && job.AssignedUnit?.Id != unitId)
                 throw new InvalidOperationException("The selected unit is not available.");
@@ -67,7 +76,6 @@ namespace eshift_management.Services
             }
 
             await _jobRepository.AssignTransportUnitAsync(jobId, unitId);
-            await _unitRepository.UpdateStatusAsync(unitId, ResourceStatus.Assigned);
         }
 
         public async Task DispatchJobAsync(int jobId)

@@ -1,4 +1,5 @@
-﻿using eshift_management.Core.Services;
+﻿using eshift_management.Core.Exceptions;
+using eshift_management.Core.Services;
 using eshift_management.Forms;
 using eshift_management.Models;
 using eshift_management.Repositories;
@@ -198,20 +199,47 @@ namespace eshift_management.Panes
 
         private async void buttonAssignOrChangeUnit_Click(object sender, EventArgs e)
         {
-            var availableUnits = (await _unitService.GetTransportUnitsByStatusAsync(ResourceStatus.Available)).ToList();
-            if (_selectedJob.AssignedUnit != null)
+            try
             {
-                availableUnits.Add(_selectedJob.AssignedUnit);
-            }
+                // Fetch all units
+                var allUnits = (await _unitService.GetAllTransportUnitsAsync()).ToList();
 
-            using (var form = new AssignUnitForm(availableUnits))
-            {
-                if (form.ShowDialog() == DialogResult.OK)
+                using (var form = new AssignUnitForm(allUnits))
                 {
-                    await _jobService.AssignTransportUnitAsync(_selectedJob.Id, form.SelectedUnit.Id);
+                    if (form.ShowDialog() != DialogResult.OK) return;
+
+                    var selectedUnitId = form.SelectedUnit.Id;
+
+                    try
+                    {
+                        // First attempt to assign, forcing a conflict check.
+                        await _jobService.AssignTransportUnitAsync(_selectedJob.Id, selectedUnitId, forceAssignment: false);
+                        MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been assigned.");
+                    }
+                    catch (UnitConflictException ex)
+                    {
+                        // If a conflict is found, ask the admin for confirmation.
+                        var confirmResult = MessageBox.Show(
+                            $"{ex.Message}\n\nDo you want to force this assignment anyway?",
+                            "Scheduling Conflict",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+
+                        if (confirmResult == DialogResult.Yes)
+                        {
+                            // Second attempt, this time forcing the assignment.
+                            await _jobService.AssignTransportUnitAsync(_selectedJob.Id, selectedUnitId, forceAssignment: true);
+                            MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been forcibly assigned.");
+                        }
+                    }
+
+                    // Refresh the grid regardless of the outcome to show changes.
                     await LoadJobsAsync();
-                    MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been assigned.");
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
