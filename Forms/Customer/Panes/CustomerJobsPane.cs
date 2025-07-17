@@ -22,7 +22,7 @@ namespace eshift_management.Panes
         public CustomerJobsPane(UserModel user)
         {
             InitializeComponent();
-            _jobService = new JobService(new JobRepository(), new TransportUnitRepository());
+            _jobService = new JobService(new JobRepository(), new TransportUnitRepository(), new UserRepository(),new CustomerRepository(), new EmailService());
             _customerService = new CustomerService(new CustomerRepository());
             this.user = user;
             SetupGrid();
@@ -75,7 +75,6 @@ namespace eshift_management.Panes
 
         private async Task AddNewJobAsync(Job newJob)
         {
-            await _jobService.CreateJobAsync(newJob);
             await LoadAndDisplayJobsAsync();
             MessageBox.Show("Your job has been submitted for review.", "Job Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

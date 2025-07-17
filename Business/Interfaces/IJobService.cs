@@ -32,14 +32,14 @@ namespace eshift_management.Core.Services
         /// <param name="jobId">The ID of the job to approve.</param>
         /// <param name="totalCost">The calculated total cost for the job.</param>
         /// <param name="estimatedHours">The estimated hours required to complete the job.</param>
-        Task ApproveJobAsync(int jobId, decimal totalCost, int estimatedHours);
+        Task ApproveJobAsync(int jobId, decimal totalCost, int estimatedHours, int customerId);
 
         /// <summary>
         /// Rejects a pending job with a specific reason.
         /// </summary>
         /// <param name="jobId">The ID of the job to reject.</param>
         /// <param name="reason">The reason for the rejection.</param>
-        Task RejectJobAsync(int jobId, string reason);
+        Task RejectJobAsync(int jobId, string reason, int customerId);
 
         /// <summary>
         /// Assigns a transport unit to an approved job, or changes the unit for a scheduled job.
@@ -53,13 +53,13 @@ namespace eshift_management.Core.Services
         /// Dispatches a scheduled job, changing its status to 'OnGoing'.
         /// </summary>
         /// <param name="jobId">The ID of the job to dispatch.</param>
-        Task DispatchJobAsync(int jobId);
+        Task DispatchJobAsync(int jobId, int customerId);
 
         /// <summary>
         /// Completes an ongoing job and frees up the assigned transport unit, making it available again.
         /// </summary>
         /// <param name="jobId">The ID of the job to complete.</param>
-        Task CompleteJobAsync(int jobId);
+        Task CompleteJobAsync(int jobId, int customerId);
 
         /// <summary>
         /// Cancels a job at any stage (Approved, Scheduled), freeing up the assigned transport unit if applicable.

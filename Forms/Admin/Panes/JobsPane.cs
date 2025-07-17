@@ -3,6 +3,7 @@ using eshift_management.Core.Services;
 using eshift_management.Forms;
 using eshift_management.Models;
 using eshift_management.Repositories;
+using eshift_management.Repositories.Services;
 using eshift_management.Services;
 using eshift_management.UI;
 
@@ -12,20 +13,22 @@ namespace eshift_management.Panes
     {
         private readonly IAdminJobService _jobService;
         private readonly ITransportUnitService _unitService;
-        private Job _selectedJob;
+        private Job? _selectedJob;
 
         public JobsPane()
         {
             InitializeComponent();
 
-            // In a real app with DI, these would be injected.
             var jobRepo = new JobRepository();
             var unitRepo = new TransportUnitRepository();
-            var truckRepo = new TruckRepository(); // Needed by Unit Repo
-            var empRepo = new EmployeeRepository(); // Needed by Unit Repo
+            var truckRepo = new TruckRepository();
+            var empRepo = new EmployeeRepository();
+            var userRepository = new UserRepository();
+            var customerRepository = new CustomerRepository();
+            var emailService = new EmailService();
 
             _unitService = new TransportUnitService(unitRepo, truckRepo, empRepo);
-            _jobService = new JobService(jobRepo, unitRepo);
+            _jobService = new JobService(jobRepo, unitRepo, userRepository, customerRepository, emailService);
 
             SetupGrid();
             PopulateFilter();
@@ -177,7 +180,7 @@ namespace eshift_management.Panes
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    await _jobService.ApproveJobAsync(_selectedJob.Id, form.TotalCost, form.EstimatedHours);
+                    await _jobService.ApproveJobAsync(_selectedJob!.Id, form.TotalCost, form.EstimatedHours, _selectedJob.Customer.UserId);
                     await LoadJobsAsync();
                     MessageBox.Show("Job has been approved.");
                 }
@@ -190,7 +193,7 @@ namespace eshift_management.Panes
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    await _jobService.RejectJobAsync(_selectedJob.Id, form.RejectionReason);
+                    await _jobService.RejectJobAsync(_selectedJob!.Id, form.RejectionReason, _selectedJob.Customer.UserId);
                     await LoadJobsAsync();
                     MessageBox.Show("Job has been rejected.");
                 }
@@ -213,7 +216,7 @@ namespace eshift_management.Panes
                     try
                     {
                         // First attempt to assign, forcing a conflict check.
-                        await _jobService.AssignTransportUnitAsync(_selectedJob.Id, selectedUnitId, forceAssignment: false);
+                        await _jobService.AssignTransportUnitAsync(_selectedJob!.Id, selectedUnitId, forceAssignment: false);
                         MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been assigned.");
                     }
                     catch (UnitConflictException ex)
@@ -228,7 +231,7 @@ namespace eshift_management.Panes
                         if (confirmResult == DialogResult.Yes)
                         {
                             // Second attempt, this time forcing the assignment.
-                            await _jobService.AssignTransportUnitAsync(_selectedJob.Id, selectedUnitId, forceAssignment: true);
+                            await _jobService.AssignTransportUnitAsync(_selectedJob!.Id, selectedUnitId, forceAssignment: true);
                             MessageBox.Show($"Unit '{form.SelectedUnit.UnitName}' has been forcibly assigned.");
                         }
                     }
@@ -245,14 +248,14 @@ namespace eshift_management.Panes
 
         private async void buttonDispatch_Click(object sender, EventArgs e)
         {
-            await _jobService.DispatchJobAsync(_selectedJob.Id);
+            await _jobService.DispatchJobAsync(_selectedJob!.Id, _selectedJob.Customer.UserId);
             await LoadJobsAsync();
             MessageBox.Show("Job has been dispatched and is now On-Going.");
         }
 
         private async void buttonComplete_Click(object sender, EventArgs e)
         {
-            await _jobService.CompleteJobAsync(_selectedJob.Id);
+            await _jobService.CompleteJobAsync(_selectedJob!.Id, _selectedJob.Customer.UserId);
             await LoadJobsAsync();
             MessageBox.Show("Job has been marked as Completed.");
         }
@@ -261,7 +264,7 @@ namespace eshift_management.Panes
         {
             if (MessageBox.Show("Are you sure you want to cancel this job?", "Confirm Cancellation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                await _jobService.CancelJobAsync(_selectedJob.Id);
+                await _jobService.CancelJobAsync(_selectedJob!.Id);
                 await LoadJobsAsync();
                 MessageBox.Show("Job has been canceled.");
             }

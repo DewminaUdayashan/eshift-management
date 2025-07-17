@@ -2,9 +2,9 @@
 using eshift_management.Core.Services.Interfaces;
 using eshift_management.Models;
 using eshift_management.Repositories.Interfaces;
-using eshift_management.Repositories.Services;
 using eshift_management.Services.Interfaces;
-using Microsoft.VisualBasic.ApplicationServices;
+using System;
+using System.Threading.Tasks;
 
 namespace eshift_management.Services.Implementations
 {
@@ -22,6 +22,7 @@ namespace eshift_management.Services.Implementations
         /// </summary>
         /// <param name="userService">The service for user operations.</param>
         /// <param name="customerService">The service for customer operations.</param>
+        /// <param name="emailService">The service for sending emails.</param>
         public AuthService(
             IUserService userService,
             ICustomerService customerService,
@@ -42,7 +43,7 @@ namespace eshift_management.Services.Implementations
                 return (false, "Email is already registered.", null);
             }
 
-            // Hash password
+            // Hash password and set initial user state
             user.PasswordHash = PasswordHelper.HashPassword(user.PasswordHash);
             user.IsEmailVerified = false;
 
@@ -54,11 +55,21 @@ namespace eshift_management.Services.Implementations
             await _customerService.AddAsync(customer);
             var otp = GenerateOtp();
 
+            // --- Updated Email Logic ---
+            string subject = "Your E-Shift Verification Code";
+            string content = $@"
+                <p>Welcome to E-Shift Movers! To complete your registration, please use the following One-Time Password (OTP). This code is valid for 10 minutes.</p>
+                <h2 style='text-align:center; font-size: 36px; letter-spacing: 4px; color: #0D47A1;'>{otp}</h2>
+                <p>If you did not request this code, please ignore this email.</p>";
+
+            // Use the template to create the final HTML body
+            string htmlBody = _emailService.GetEmailHtmlTemplate("Verify Your Email", content, customer.FirstName);
+
             // Send verification email
             await _emailService.SendEmailAsync(
-      toEmail: user.Email,
-      subject: "Your e-Shift OTP Code",
-      htmlBody: $"<h3>Your verification code is: <strong>{otp}</strong></h3>");
+                toEmail: user.Email,
+                subject: subject,
+                htmlBody: htmlBody);
 
             var newUser = await _userService.GetByIdAsync(userId);
             newUser.temporaryOTP = otp;
@@ -89,12 +100,14 @@ namespace eshift_management.Services.Implementations
             return (true, null, user);
         }
 
+        /// <summary>
+        /// Generates a random 6-digit OTP.
+        /// </summary>
         private static string GenerateOtp()
         {
             var random = new Random();
-            return random.Next(100000, 999999).ToString(); // 6-digit OTP
+            return random.Next(100000, 999999).ToString();
         }
-
 
         /// <inheritdoc/>
         public async Task EnsureAdminUserExistsAsync()
@@ -102,10 +115,8 @@ namespace eshift_management.Services.Implementations
             const string adminEmail = "admin@eshift.com";
             const string adminPassword = "Admin@eshift123";
 
-            // 1. Check if the admin user already exists.
             var existingAdmin = await _userService.FindByEmailAsync(adminEmail);
 
-            // 2. If the user does not exist, create them.
             if (existingAdmin == null)
             {
                 var adminUser = new UserModel
@@ -115,7 +126,6 @@ namespace eshift_management.Services.Implementations
                     IsEmailVerified = true,
                     PasswordHash = PasswordHelper.HashPassword(adminPassword)
                 };
-
                 await _userService.AddAsync(adminUser);
             }
         }

@@ -1,6 +1,7 @@
 ﻿using eshift_management.Core.Services;
 using eshift_management.Models;
 using eshift_management.Repositories;
+using eshift_management.Repositories.Services;
 using eshift_management.Services;
 using FluentValidation.Results;
 using MaterialSkin.Controls;
@@ -22,7 +23,7 @@ namespace eshift_management.Forms
 
             this.currentCustomer = user;
             this.currentJob = jobToEdit;
-            this.jobService = new JobService(new JobRepository(), new TransportUnitRepository());
+            this.jobService = new JobService(new JobRepository(), new TransportUnitRepository(), new UserRepository(),new CustomerRepository(), new EmailService());
             this.isEditMode = (currentJob != null);
 
             SetupForm();
