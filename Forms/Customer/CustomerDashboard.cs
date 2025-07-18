@@ -93,5 +93,23 @@ namespace eshift_management
             ActivateButton(sender);
             ShowPane(new CustomerProfilePane(user));
         }
+
+        private void buttonLogout_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to log out?",
+                "Confirm Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                this.Hide();
+                var loginForm = new LoginForm();
+                loginForm.ShowDialog(); // Block until login form is closed
+                this.Close();
+            }
+        }
     }
 }

@@ -17,6 +17,7 @@
         private void InitializeComponent()
         {
             this.panelMenu = new System.Windows.Forms.Panel();
+            this.buttonLogout = new System.Windows.Forms.Button(); // New Logout Button
             this.buttonProfile = new System.Windows.Forms.Button();
             this.buttonMyJobs = new System.Windows.Forms.Button();
             this.panelLogo = new System.Windows.Forms.Panel();
@@ -29,6 +30,7 @@
             // 
             // panelMenu
             // 
+            this.panelMenu.Controls.Add(this.buttonLogout); // Add button to panel
             this.panelMenu.Controls.Add(this.buttonProfile);
             this.panelMenu.Controls.Add(this.buttonMyJobs);
             this.panelMenu.Controls.Add(this.panelLogo);
@@ -38,6 +40,24 @@
             this.panelMenu.Name = "panelMenu";
             this.panelMenu.Size = new System.Drawing.Size(220, 656);
             this.panelMenu.TabIndex = 1;
+            // 
+            // buttonLogout
+            // 
+            this.buttonLogout.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.buttonLogout.FlatAppearance.BorderSize = 0;
+            this.buttonLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonLogout.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonLogout.ForeColor = System.Drawing.Color.Gainsboro;
+            this.buttonLogout.Location = new System.Drawing.Point(0, 596);
+            this.buttonLogout.Name = "buttonLogout";
+            this.buttonLogout.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
+            this.buttonLogout.Size = new System.Drawing.Size(220, 60);
+            this.buttonLogout.TabIndex = 4; // Next tab index
+            this.buttonLogout.Text = "  Logout";
+            this.buttonLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.buttonLogout.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.buttonLogout.UseVisualStyleBackColor = true;
+            this.buttonLogout.Click += new System.EventHandler(this.buttonLogout_Click);
             // 
             // buttonProfile
             // 
@@ -131,5 +151,6 @@
         private System.Windows.Forms.Panel panelMain;
         private System.Windows.Forms.Button buttonMyJobs;
         private System.Windows.Forms.Button buttonProfile;
+        private System.Windows.Forms.Button buttonLogout; 
     }
 }

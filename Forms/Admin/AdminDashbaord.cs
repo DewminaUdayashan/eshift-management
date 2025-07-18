@@ -112,5 +112,23 @@ namespace eshift_management
             ActivateButton(sender);
             ShowPane(new ReportsPane());
         }
+
+        private void buttonLogout_Click(object sender, System.EventArgs e)
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to log out?",
+                "Confirm Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                this.Hide();
+                var loginForm = new LoginForm();
+                loginForm.ShowDialog(); 
+                this.Close();
+            }
+        }
     }
 }
