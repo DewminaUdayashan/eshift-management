@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.panelMenu = new System.Windows.Forms.Panel();
+            this.buttonLogout = new System.Windows.Forms.Button(); // New Logout Button
             this.buttonReports = new System.Windows.Forms.Button();
             this.buttonJobs = new System.Windows.Forms.Button();
             this.buttonUnits = new System.Windows.Forms.Button();
@@ -46,6 +47,7 @@
             // 
             // panelMenu
             // 
+            this.panelMenu.Controls.Add(this.buttonLogout); // Add button to panel
             this.panelMenu.Controls.Add(this.buttonReports);
             this.panelMenu.Controls.Add(this.buttonJobs);
             this.panelMenu.Controls.Add(this.buttonUnits);
@@ -61,6 +63,24 @@
             this.panelMenu.Size = new System.Drawing.Size(220, 656);
             this.panelMenu.TabIndex = 0;
             // 
+            // buttonLogout
+            // 
+            this.buttonLogout.Dock = System.Windows.Forms.DockStyle.Bottom; // Dock to bottom
+            this.buttonLogout.FlatAppearance.BorderSize = 0;
+            this.buttonLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonLogout.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.buttonLogout.ForeColor = System.Drawing.Color.Gainsboro;
+            this.buttonLogout.Location = new System.Drawing.Point(0, 596);
+            this.buttonLogout.Name = "buttonLogout";
+            this.buttonLogout.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
+            this.buttonLogout.Size = new System.Drawing.Size(220, 60);
+            this.buttonLogout.TabIndex = 8; // Next tab index
+            this.buttonLogout.Text = "  Logout";
+            this.buttonLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.buttonLogout.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.buttonLogout.UseVisualStyleBackColor = true;
+            this.buttonLogout.Click += new System.EventHandler(this.buttonLogout_Click);
+            //
             // buttonReports
             // 
             this.buttonReports.Dock = System.Windows.Forms.DockStyle.Top;
@@ -247,5 +267,6 @@
         private System.Windows.Forms.Button buttonCustomers;
         private System.Windows.Forms.PictureBox pictureBoxLogo;
         private System.Windows.Forms.Panel panelMain;
+        private System.Windows.Forms.Button buttonLogout; 
     }
 }
