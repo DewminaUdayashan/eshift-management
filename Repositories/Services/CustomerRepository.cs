@@ -1,9 +1,8 @@
-﻿using eshift_management.Data;
+﻿using Dapper;
+using eshift_management.Data;
 using eshift_management.Models;
 using eshift_management.Repositories.Interfaces;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace eshift_management.Repositories.Services
 {
@@ -32,42 +31,48 @@ namespace eshift_management.Repositories.Services
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<CustomerModel>> GetAllAsync(Dictionary<string, object> filter = null, string orderBy = null, bool isAscending = true)
+        public async Task<IEnumerable<CustomerModel>> GetAllAsync(Dictionary<string, object>? filter = null, string? orderBy = null, bool isAscending = true)
         {
             var sqlBuilder = new StringBuilder(@"
                 SELECT
-    c.user_id AS UserId,
-    u.email AS Email,
-    c.first_name AS FirstName,
-    c.last_name AS LastName,
-    c.phone_number AS Phone,
-    c.address_line AS AddressLine,
-    c.city AS City,
-    c.postal_code AS PostalCode
-FROM
-    customers c
-JOIN
-    users u ON c.user_id = u.id");
+                    c.user_id AS UserId,
+                    u.email AS Email,
+                    c.first_name AS FirstName,
+                    c.last_name AS LastName,
+                    c.phone_number AS Phone,
+                    c.address_line AS AddressLine,
+                    c.city AS City,
+                    c.postal_code AS PostalCode,
+                    COUNT(j.id) AS OngoingJobs
+                FROM customers c
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN jobs j ON c.user_id = j.customer_id AND (j.status = 'OnGoing' OR j.status = 'Scheduled')");
 
-            if (filter != null && filter.Count > 0)
+            var parameters = new DynamicParameters();
+
+            // Handle search term filter
+            if (filter != null && filter.TryGetValue("SearchTerm", out var searchTermValue) && searchTermValue?.ToString() is string searchTerm && !string.IsNullOrWhiteSpace(searchTerm))
             {
-                sqlBuilder.Append(" WHERE ");
-                var conditions = new List<string>();
-                foreach (var key in filter.Keys)
-                {
-                    conditions.Add($"{key} = @{key}");
-                }
-                sqlBuilder.Append(string.Join(" AND ", conditions));
+                sqlBuilder.Append(" WHERE CONCAT(c.first_name, ' ', c.last_name) LIKE @SearchQuery OR u.email LIKE @SearchQuery");
+                parameters.Add("SearchQuery", $"%{searchTerm}%");
             }
 
+            // Group by all customer fields to correctly count jobs
+            sqlBuilder.Append(" GROUP BY c.user_id, u.email, c.first_name, c.last_name, c.phone_number, c.address_line, c.city, c.postal_code");
+
+            // Handle sorting
             if (!string.IsNullOrWhiteSpace(orderBy))
             {
-                sqlBuilder.Append($" ORDER BY {orderBy} {(isAscending ? "ASC" : "DESC")}");
+                string dbColumn = orderBy switch
+                {
+                    "FirstName" => "FirstName", // Dapper can sort by computed properties
+                    "OngoingJobs" => "OngoingJobs",
+                    _ => "UserId"
+                };
+                sqlBuilder.Append($" ORDER BY {dbColumn} {(isAscending ? "ASC" : "DESC")}");
             }
 
-            sqlBuilder.Append(';');
-
-            return await DbExecutor.QueryAsync<CustomerModel>(sqlBuilder.ToString(), filter);
+            return await DbExecutor.QueryAsync<CustomerModel>(sqlBuilder.ToString(), parameters);
         }
 
         /// <inheritdoc />

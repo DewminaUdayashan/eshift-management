@@ -1,25 +1,28 @@
 ﻿using eshift_management.Models;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+using eshift_management.Repositories.Services;
+using eshift_management.Services.Implementations;
+using eshift_management.Services.Interfaces;
 
 namespace eshift_management
 {
     public partial class CustomersPane : UserControl
     {
-        private List<CustomerModel> allCustomers;
+        private readonly ICustomerService _customerService;
         private bool isSortAscending = true;
 
         public CustomersPane()
         {
             InitializeComponent();
+            buttonAddNew.Visible = false;
+
+            var customerRepo = new CustomerRepository();
+            _customerService = new CustomerService(customerRepo);
+
             SetupDataGridView();
             // ** FIX: Setup sorting controls BEFORE loading data to prevent null reference **
             SetupSorting();
-            LoadDummyData();
+
+            _ = LoadCustomersAsync(); // Load data asynchronously from the service
         }
 
         /// <summary>
@@ -30,7 +33,7 @@ namespace eshift_management
             dataGridViewCustomers.AutoGenerateColumns = false;
             dataGridViewCustomers.Columns.Clear();
 
-            AddGridColumn("Id", "Customer ID", 100);
+            AddGridColumn("UserID", "Customer ID", 100);
             AddGridColumn("FullName", "Full Name", 150);
             AddGridColumn("Email", "Email Address", 200);
             AddGridColumn("Phone", "Phone", 120);
@@ -52,12 +55,43 @@ namespace eshift_management
         }
 
         /// <summary>
+        /// Fetches, filters, and sorts customer data from the service and updates the grid.
+        /// </summary>
+        private async Task LoadCustomersAsync()
+        {
+            try
+            {
+                var filter = new Dictionary<string, object>();
+                string? searchTerm = textBoxSearch.Text.Trim();
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    filter.Add("SearchTerm", searchTerm);
+                }
+
+                string sortBy = comboBoxSortBy.SelectedItem.ToString();
+                string orderByProperty = sortBy switch
+                {
+                    "First Name" => "FirstName",
+                    "Ongoing Jobs" => "OngoingJobs",
+                    _ => "UserId" // Default to "Customer ID"
+                };
+
+                var customers = await _customerService.GetAllAsync(filter, orderByProperty, isSortAscending);
+                dataGridViewCustomers.DataSource = customers.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load customers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
         /// Populates the sorting dropdown menu.
         /// </summary>
         private void SetupSorting()
         {
             comboBoxSortBy.Items.Add("Customer ID");
-            comboBoxSortBy.Items.Add("Full Name");
+            comboBoxSortBy.Items.Add("First Name");
             comboBoxSortBy.Items.Add("Ongoing Jobs");
             comboBoxSortBy.SelectedIndex = 0;
         }
@@ -75,92 +109,53 @@ namespace eshift_management
             dataGridViewCustomers.Columns.Add(column);
         }
 
-        private void LoadDummyData()
-        {
-            allCustomers = new List<CustomerModel>
-            {
-                new CustomerModel { UserId=0, FirstName = "John", LastName = "Smith", Email = "john.smith@example.com", Phone = "555-0101", AddressLine = "123 Maple St", City="Springfield", PostalCode="12345", OngoingJobs = 2 },
-                new CustomerModel { UserId=0,FirstName = "Jane", LastName = "Doe", Email = "jane.doe@example.com", Phone = "555-0102", AddressLine = "456 Oak Ave", City="Shelbyville", PostalCode="23456", OngoingJobs = 0 },
-                new CustomerModel { UserId=0,FirstName = "Peter", LastName = "Jones", Email = "peter.jones@example.com", Phone = "555-0103", AddressLine = "789 Pine Ln", City="Capital City", PostalCode="34567", OngoingJobs = 1 },
-                new CustomerModel { UserId=0,FirstName = "Mary", LastName = "Johnson", Email = "mary.j@example.com", Phone = "555-0104", AddressLine = "101 Elm Ct", City="Ogdenville", PostalCode="45678", OngoingJobs = 0 },
-                new CustomerModel { UserId=0,FirstName = "David", LastName = "Williams", Email = "d.williams@example.com", Phone = "555-0105", AddressLine = "212 Birch Rd", City="North Haverbrook", PostalCode="56789", OngoingJobs = 3 }
-            };
-
-            UpdateGridDisplay();
-        }
-
         /// <summary>
-        /// Central method to filter, sort, and display data in the grid.
+        /// Handles the click event for the 'Add New' button, opening the Add/Edit form.
         /// </summary>
-        private void UpdateGridDisplay()
-        {
-            if (allCustomers == null) return;
-
-            IEnumerable<CustomerModel> processedData = allCustomers;
-
-            // 1. Filter based on search text
-            string searchText = textBoxSearch.Text.ToLower().Trim();
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                processedData = processedData.Where(c =>
-                    c.FullName.ToLower().Contains(searchText) ||
-                    c.Email.ToLower().Contains(searchText)
-                ).ToList();
-            }
-
-            // 2. Sort the filtered data
-            string sortBy = comboBoxSortBy.SelectedItem.ToString();
-            switch (sortBy)
-            {
-                case "Full Name":
-                    processedData = isSortAscending ? processedData.OrderBy(c => c.FullName) : processedData.OrderByDescending(c => c.FullName);
-                    break;
-                case "Ongoing Jobs":
-                    processedData = isSortAscending ? processedData.OrderBy(c => c.OngoingJobs) : processedData.OrderByDescending(c => c.OngoingJobs);
-                    break;
-                default: // "Customer ID"
-                    processedData = isSortAscending ? processedData.OrderBy(c => c.UserId) : processedData.OrderByDescending(c => c.UserId);
-                    break;
-            }
-
-            // 3. Display the final processed data by setting the DataSource
-            dataGridViewCustomers.DataSource = processedData.ToList();
-        }
-
-        private void buttonAddNew_Click(object sender, EventArgs e)
+        private async void buttonAddNew_Click(object sender, EventArgs e)
         {
             using (var form = new AddEditCustomerForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    allCustomers.Add(form.TheCustomer);
-                    UpdateGridDisplay();
-                    MessageBox.Show("Customer successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    try
+                    {
+                        await _customerService.AddAsync(form.TheCustomer);
+                        await LoadCustomersAsync(); // Refresh grid from database
+                        MessageBox.Show("Customer successfully added.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to add customer: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
-        private void dataGridViewCustomers_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        /// <summary>
+        /// Handles cell content clicks, specifically for the 'Edit' button in the grid.
+        /// </summary>
+        private async void dataGridViewCustomers_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || dataGridViewCustomers.Columns[e.ColumnIndex].Name != "Edit")
                 return;
 
-            string customerId = dataGridViewCustomers.Rows[e.RowIndex].Cells["Id"].Value.ToString();
-            var customerToEdit = allCustomers.FirstOrDefault(c => c.UserId.ToString() == customerId);
-
-            if (customerToEdit != null)
+            if (dataGridViewCustomers.Rows[e.RowIndex].DataBoundItem is CustomerModel customerToEdit)
             {
                 using (var form = new AddEditCustomerForm(customerToEdit))
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        int index = allCustomers.FindIndex(c => c.UserId.ToString() == customerId);
-                        if (index != -1)
+                        try
                         {
-                            allCustomers[index] = form.TheCustomer;
+                            await _customerService.UpdateAsync(form.TheCustomer);
+                            await LoadCustomersAsync(); // Refresh grid from database
+                            MessageBox.Show("Customer successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        UpdateGridDisplay();
-                        MessageBox.Show("Customer successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to update customer: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
@@ -169,19 +164,19 @@ namespace eshift_management
         /// <summary>
         /// Handles changes to any sorting or filtering control.
         /// </summary>
-        private void Sort_Changed(object sender, EventArgs e)
+        private async void Sort_Changed(object sender, EventArgs e)
         {
-            UpdateGridDisplay();
+            await LoadCustomersAsync();
         }
 
         /// <summary>
         /// Toggles the sort order and refreshes the grid.
         /// </summary>
-        private void buttonSortOrder_Click(object sender, EventArgs e)
+        private async void buttonSortOrder_Click(object sender, EventArgs e)
         {
             isSortAscending = !isSortAscending;
             buttonSortOrder.Text = isSortAscending ? "ASC" : "DESC";
-            UpdateGridDisplay();
+            await LoadCustomersAsync();
         }
     }
 }
