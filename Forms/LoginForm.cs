@@ -6,18 +6,13 @@ using eshift_management.Services.Implementations;
 using eshift_management.Services.Interfaces;
 using MaterialSkin;
 using MaterialSkin.Controls;
-using Microsoft.VisualBasic.ApplicationServices;
-using System;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace eshift_management
 {
     public partial class LoginForm : MaterialForm
     {
         private readonly LoginValidator _validator;
-        private UserType _selectedUserType = UserType.None;
+        private UserType _selectedUserType = UserType.Customer; // Default to Customer
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly ICustomerService _customerService;
@@ -59,19 +54,48 @@ namespace eshift_management
 
         private void InitializeUserTypeButtons()
         {
-            SelectUserType(UserType.None);
+            UpdateButtonStyles();
         }
 
-        private void SelectUserType(UserType userType)
+        private void MaterialButtonCustomer_Click(object sender, EventArgs e)
         {
-            _selectedUserType = userType;
-            materialButtonCustomer.Type = (userType == UserType.Customer) ? MaterialButton.MaterialButtonType.Contained : MaterialButton.MaterialButtonType.Outlined;
-            materialButtonCompany.Type = (userType == UserType.Admin) ? MaterialButton.MaterialButtonType.Contained : MaterialButton.MaterialButtonType.Outlined;
-            labelUserTypeError.Visible = false;
+            _selectedUserType = UserType.Customer;
+            UpdateButtonStyles();
         }
 
-        private void MaterialButtonCustomer_Click(object sender, EventArgs e) => SelectUserType(UserType.Customer);
-        private void MaterialButtonCompany_Click(object sender, EventArgs e) => SelectUserType(UserType.Admin);
+        private void MaterialButtonCompany_Click(object sender, EventArgs e)
+        {
+            _selectedUserType = UserType.Admin; // "Company" corresponds to Admin
+            UpdateButtonStyles();
+        }
+
+        /// <summary>
+        /// Updates the visual style of the user type selection buttons.
+        /// The selected button will be 'Contained' (filled), and the other 'Outlined'.
+        /// </summary>
+        private void UpdateButtonStyles()
+        {
+            if (_selectedUserType == UserType.Customer)
+            {
+                // Select Customer button
+                materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+                materialButtonCustomer.HighEmphasis = true;
+
+                // Deselect Company button
+                materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+                materialButtonCompany.HighEmphasis = false;
+            }
+            else // Admin is selected
+            {
+                // Deselect Customer button
+                materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+                materialButtonCustomer.HighEmphasis = false;
+
+                // Select Company button
+                materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+                materialButtonCompany.HighEmphasis = true;
+            }
+        }
 
         private async void MaterialButtonSignIn_Click(object sender, EventArgs e)
         {

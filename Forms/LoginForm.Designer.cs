@@ -73,7 +73,7 @@
             materialButtonCustomer.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             materialButtonCustomer.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
             materialButtonCustomer.Depth = 0;
-            materialButtonCustomer.HighEmphasis = false;
+            materialButtonCustomer.HighEmphasis = true; // Selected by default
             materialButtonCustomer.Icon = null;
             materialButtonCustomer.Location = new Point(115, 190);
             materialButtonCustomer.Margin = new Padding(0);
@@ -83,7 +83,7 @@
             materialButtonCustomer.Size = new Size(110, 36);
             materialButtonCustomer.TabIndex = 2;
             materialButtonCustomer.Text = "Customer";
-            materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+            materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained; // Selected by default
             materialButtonCustomer.UseAccentColor = false;
             materialButtonCustomer.UseVisualStyleBackColor = true;
             materialButtonCustomer.Click += MaterialButtonCustomer_Click;
@@ -94,7 +94,7 @@
             materialButtonCompany.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             materialButtonCompany.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
             materialButtonCompany.Depth = 0;
-            materialButtonCompany.HighEmphasis = false;
+            materialButtonCompany.HighEmphasis = false; // Not selected by default
             materialButtonCompany.Icon = null;
             materialButtonCompany.Location = new Point(225, 190);
             materialButtonCompany.Margin = new Padding(0);
@@ -104,7 +104,7 @@
             materialButtonCompany.Size = new Size(110, 36);
             materialButtonCompany.TabIndex = 3;
             materialButtonCompany.Text = "Company";
-            materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+            materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined; // Not selected by default
             materialButtonCompany.UseAccentColor = false;
             materialButtonCompany.UseVisualStyleBackColor = true;
             materialButtonCompany.Click += MaterialButtonCompany_Click;
