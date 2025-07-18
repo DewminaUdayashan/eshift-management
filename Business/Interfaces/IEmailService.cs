@@ -15,5 +15,11 @@ namespace eshift_management.Core.Services.Interfaces
         /// <param name="htmlBody">The body of the email, which can contain HTML.</param>
         /// <returns>A task that represents the asynchronous send operation.</returns>
         Task SendEmailAsync(string toEmail, string subject, string htmlBody);
+
+
+        /// <summary>
+        /// Creates a styled HTML email body.
+        /// </summary>
+        string GetEmailHtmlTemplate(string title, string content, string customerName);
     }
 }

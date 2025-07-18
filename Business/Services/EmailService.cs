@@ -57,5 +57,44 @@ namespace eshift_management.Core.Services
                                 "Email Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        /// <summary>
+        /// Creates a styled HTML email body.
+        /// </summary>
+        public string GetEmailHtmlTemplate(string title, string content, string customerName)
+        {
+            return $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                    .header {{ background-color: #0D47A1; color: #ffffff; padding: 40px; text-align: center; }}
+                    .header h1 {{ margin: 0; font-size: 28px; }}
+                    .content {{ padding: 30px 40px; color: #555555; line-height: 1.6; }}
+                    .content p {{ margin: 0 0 15px; }}
+                    .footer {{ background-color: #f4f4f4; color: #888888; text-align: center; padding: 20px; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>{title}</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Dear {customerName},</p>
+                        {content}
+                        <p>Thank you,<br/>The E-Shift Movers Team</p>
+                    </div>
+                    <div class='footer'>
+                        <p>&copy; {DateTime.Now.Year} E-Shift Movers. All rights reserved.</p>
+                        <p>No. 123, Thalpe, Galle, Sri Lanka</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+        }
     }
+
 }
