@@ -6,16 +6,22 @@ using eshift_management.Services.Implementations;
 using eshift_management.Services.Interfaces;
 using MaterialSkin;
 using MaterialSkin.Controls;
+using System;
+using System.Drawing;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace eshift_management
 {
     public partial class LoginForm : MaterialForm
     {
         private readonly LoginValidator _validator;
-        private UserType _selectedUserType = UserType.Customer; // Default to Customer
+        private UserType _selectedUserType = UserType.Customer;
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly ICustomerService _customerService;
+        private UserModel _userPendingVerification;
+        private int _cooldownSeconds;
 
         public LoginForm()
         {
@@ -65,7 +71,7 @@ namespace eshift_management
 
         private void MaterialButtonCompany_Click(object sender, EventArgs e)
         {
-            _selectedUserType = UserType.Admin; // "Company" corresponds to Admin
+            _selectedUserType = UserType.Admin;
             UpdateButtonStyles();
         }
 
@@ -77,22 +83,16 @@ namespace eshift_management
         {
             if (_selectedUserType == UserType.Customer)
             {
-                // Select Customer button
-                materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+                materialButtonCustomer.Type = MaterialButton.MaterialButtonType.Contained;
                 materialButtonCustomer.HighEmphasis = true;
-
-                // Deselect Company button
-                materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+                materialButtonCompany.Type = MaterialButton.MaterialButtonType.Outlined;
                 materialButtonCompany.HighEmphasis = false;
             }
-            else // Admin is selected
+            else
             {
-                // Deselect Customer button
-                materialButtonCustomer.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+                materialButtonCustomer.Type = MaterialButton.MaterialButtonType.Outlined;
                 materialButtonCustomer.HighEmphasis = false;
-
-                // Select Company button
-                materialButtonCompany.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+                materialButtonCompany.Type = MaterialButton.MaterialButtonType.Contained;
                 materialButtonCompany.HighEmphasis = true;
             }
         }
@@ -101,7 +101,7 @@ namespace eshift_management
         {
             materialButtonSignIn.Enabled = false;
             var originalText = materialButtonSignIn.Text;
-            materialButtonSignIn.Text = "Sgining in...";
+            materialButtonSignIn.Text = "Signing in...";
             ClearErrorStyling();
 
             try
@@ -135,25 +135,31 @@ namespace eshift_management
                     }
                     return;
                 }
-                var (isSuccess, errorMessage, user) = await _authService.LoginAsync(materialTextBoxEmail.Text, materialTextBoxPassword.Text);
-                if (!isSuccess)
+
+                var (isSuccess, errorMessage, user) = await _authService.LoginAsync(loginModel.Email, loginModel.Password);
+
+                if (!isSuccess || user == null)
                 {
-                    MessageBox.Show(errorMessage ?? "Registration failed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(errorMessage ?? "Account not found or invalid credentials.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                if(user == null)
+
+                if (!user.IsEmailVerified)
                 {
-                    MessageBox.Show("Account not found. Please check your credentials.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    _userPendingVerification = user;
+                    ShowOtpVerificationView();
                     return;
                 }
+
                 if (loginModel.UserType != user.UserType)
                 {
-                    MessageBox.Show($"You are trying to log in as a {loginModel.UserType}, but your account has no permission to access ${loginModel.UserType} content.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"You are trying to log in as a {loginModel.UserType}, but this is a {user.UserType} account.", "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
+
                 PerformLogin(loginModel, user);
             }
-            finally 
+            finally
             {
                 materialButtonSignIn.Enabled = true;
                 materialButtonSignIn.Text = originalText;
@@ -183,6 +189,69 @@ namespace eshift_management
             }
         }
 
+        /// <summary>
+        /// Switches the view from login controls to OTP verification controls.
+        /// </summary>
+        private void ShowOtpVerificationView()
+        {
+            panelLogin.Visible = false;
+            panelOtp.Visible = true;
+            StartOtpCooldown();
+        }
+
+        /// <summary>
+        /// Handles the click event for the OTP verification button.
+        /// </summary>
+        private async void buttonVerify_Click(object sender, EventArgs e)
+        {
+            if (_userPendingVerification == null) return;
+
+            if (textBoxOtp.Text == _userPendingVerification.temporaryOTP)
+            {
+                _userPendingVerification.IsEmailVerified = true;
+                await _userService.UpdateAsync(_userPendingVerification);
+                MessageBox.Show("Email verified successfully! Logging you in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                PerformLogin(new LoginModel { UserType = _userPendingVerification.UserType }, _userPendingVerification);
+            }
+            else
+            {
+                MessageBox.Show("Invalid OTP. Please try again.", "Verification Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Enables the Verify button when the OTP text box is not empty.
+        /// </summary>
+        private void textBoxOtp_TextChanged(object sender, EventArgs e)
+        {
+            buttonVerify.Enabled = !string.IsNullOrWhiteSpace(textBoxOtp.Text);
+        }
+
+        private void linkResendOtp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            MessageBox.Show("A new OTP has been sent to your email.", "OTP Resent", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            StartOtpCooldown();
+        }
+
+        private void StartOtpCooldown()
+        {
+            _cooldownSeconds = 30;
+            linkResendOtp.Enabled = false;
+            otpCooldownTimer.Start();
+        }
+
+        private void otpCooldownTimer_Tick(object sender, EventArgs e)
+        {
+            _cooldownSeconds--;
+            linkResendOtp.Text = $"Resend OTP in ({_cooldownSeconds})";
+            if (_cooldownSeconds <= 0)
+            {
+                otpCooldownTimer.Stop();
+                linkResendOtp.Text = "Resend OTP";
+                linkResendOtp.Enabled = true;
+            }
+        }
+
         private void ClearErrorStyling()
         {
             labelEmailError.Visible = false;
@@ -192,21 +261,16 @@ namespace eshift_management
 
         private void materialButtonRegister_Click(object sender, EventArgs e)
         {
-            // Hide the login form while the registration form is open
             this.Hide();
             using (var registerForm = new RegistrationForm())
             {
                 var result = registerForm.ShowDialog();
-
-                // If registration was successful, the registration form handles navigation
-                // and this login form will just close.
                 if (result == DialogResult.OK)
                 {
                     this.Close();
                 }
                 else
                 {
-                    // If the user canceled registration, show the login form again.
                     this.Show();
                 }
             }
@@ -216,8 +280,16 @@ namespace eshift_management
         {
             if (keyData == Keys.Enter)
             {
-                MaterialButtonSignIn_Click(materialButtonSignIn, EventArgs.Empty);
-                return true;
+                if (panelLogin.Visible)
+                {
+                    MaterialButtonSignIn_Click(materialButtonSignIn, EventArgs.Empty);
+                    return true;
+                }
+                if (panelOtp.Visible && buttonVerify.Enabled)
+                {
+                    buttonVerify_Click(buttonVerify, EventArgs.Empty);
+                    return true;
+                }
             }
             return base.ProcessDialogKey(keyData);
         }
