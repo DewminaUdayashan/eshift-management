@@ -209,6 +209,7 @@ namespace eshift_management
             if (textBoxOtp.Text == _userPendingVerification.temporaryOTP)
             {
                 _userPendingVerification.IsEmailVerified = true;
+                _userPendingVerification.UserType = UserType.Customer; // Ensure user type is set correctly
                 await _userService.UpdateAsync(_userPendingVerification);
                 MessageBox.Show("Email verified successfully! Logging you in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PerformLogin(new LoginModel { UserType = _userPendingVerification.UserType }, _userPendingVerification);

@@ -4,12 +4,6 @@ using eshift_management.Repositories.Services;
 using eshift_management.Services.Implementations;
 using eshift_management.Services.Interfaces;
 using MaterialSkin.Controls;
-using Microsoft.VisualBasic.ApplicationServices;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace eshift_management.Forms
 {
@@ -172,6 +166,7 @@ namespace eshift_management.Forms
             if (textBoxOtp.Text == _registeredUser.temporaryOTP)
             {
                 _registeredUser.IsEmailVerified = true; // Mark user as verified
+                _registeredUser.UserType = UserType.Customer; // Ensure user type is set correctly
                 _userService.UpdateAsync(_registeredUser);
                 MessageBox.Show("Registration successful! You will now be taken to your dashboard.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
