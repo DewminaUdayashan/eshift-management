@@ -75,10 +75,6 @@ namespace eshift_management
             UpdateButtonStyles();
         }
 
-        /// <summary>
-        /// Updates the visual style of the user type selection buttons.
-        /// The selected button will be 'Contained' (filled), and the other 'Outlined'.
-        /// </summary>
         private void UpdateButtonStyles()
         {
             if (_selectedUserType == UserType.Customer)
@@ -189,9 +185,6 @@ namespace eshift_management
             }
         }
 
-        /// <summary>
-        /// Switches the view from login controls to OTP verification controls.
-        /// </summary>
         private void ShowOtpVerificationView()
         {
             panelLogin.Visible = false;
@@ -199,9 +192,6 @@ namespace eshift_management
             StartOtpCooldown();
         }
 
-        /// <summary>
-        /// Handles the click event for the OTP verification button.
-        /// </summary>
         private async void buttonVerify_Click(object sender, EventArgs e)
         {
             if (_userPendingVerification == null) return;
@@ -209,7 +199,7 @@ namespace eshift_management
             if (textBoxOtp.Text == _userPendingVerification.temporaryOTP)
             {
                 _userPendingVerification.IsEmailVerified = true;
-                _userPendingVerification.UserType = UserType.Customer; // Ensure user type is set correctly
+                _userPendingVerification.UserType = UserType.Customer;
                 await _userService.UpdateAsync(_userPendingVerification);
                 MessageBox.Show("Email verified successfully! Logging you in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PerformLogin(new LoginModel { UserType = _userPendingVerification.UserType }, _userPendingVerification);
@@ -220,9 +210,6 @@ namespace eshift_management
             }
         }
 
-        /// <summary>
-        /// Enables the Verify button when the OTP text box is not empty.
-        /// </summary>
         private void textBoxOtp_TextChanged(object sender, EventArgs e)
         {
             buttonVerify.Enabled = !string.IsNullOrWhiteSpace(textBoxOtp.Text);
@@ -274,6 +261,14 @@ namespace eshift_management
                 {
                     this.Show();
                 }
+            }
+        }
+
+        private void linkForgotPassword_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            using (var forgotPasswordForm = new ForgotPasswordForm(_authService))
+            {
+                forgotPasswordForm.ShowDialog(this);
             }
         }
 

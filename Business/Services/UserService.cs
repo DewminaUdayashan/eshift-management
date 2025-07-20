@@ -47,5 +47,10 @@ namespace eshift_management.Services.Implementations
         {
             return _userRepository.FindByEmailAsync(email);
         }
-     }
- }
+
+        public Task UpdatePassword(UserModel user)
+        {
+            return _userRepository.UpdatePassword(user);
+        }
+    }
+}

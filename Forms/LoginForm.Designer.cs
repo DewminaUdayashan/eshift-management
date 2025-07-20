@@ -32,6 +32,7 @@
             this.labelUserTypeError = new System.Windows.Forms.Label();
             this.materialButtonRegister = new MaterialSkin.Controls.MaterialButton();
             this.panelLogin = new System.Windows.Forms.Panel();
+            this.linkForgotPassword = new System.Windows.Forms.LinkLabel();
             this.panelOtp = new System.Windows.Forms.Panel();
             this.linkResendOtp = new System.Windows.Forms.LinkLabel();
             this.buttonVerify = new MaterialSkin.Controls.MaterialButton();
@@ -225,7 +226,7 @@
             this.materialButtonRegister.Depth = 0;
             this.materialButtonRegister.HighEmphasis = false;
             this.materialButtonRegister.Icon = null;
-            this.materialButtonRegister.Location = new System.Drawing.Point(84, 492);
+            this.materialButtonRegister.Location = new System.Drawing.Point(84, 522);
             this.materialButtonRegister.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.materialButtonRegister.MouseState = MaterialSkin.MouseState.HOVER;
             this.materialButtonRegister.Name = "materialButtonRegister";
@@ -240,6 +241,7 @@
             // 
             // panelLogin
             // 
+            this.panelLogin.Controls.Add(this.linkForgotPassword);
             this.panelLogin.Controls.Add(this.labelSignIn);
             this.panelLogin.Controls.Add(this.materialButtonRegister);
             this.panelLogin.Controls.Add(this.pictureBoxLogo);
@@ -256,8 +258,19 @@
             this.panelLogin.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelLogin.Location = new System.Drawing.Point(3, 24);
             this.panelLogin.Name = "panelLogin";
-            this.panelLogin.Size = new System.Drawing.Size(446, 533);
+            this.panelLogin.Size = new System.Drawing.Size(446, 573);
             this.panelLogin.TabIndex = 14;
+            // 
+            // linkForgotPassword
+            // 
+            this.linkForgotPassword.AutoSize = true;
+            this.linkForgotPassword.Location = new System.Drawing.Point(235, 485);
+            this.linkForgotPassword.Name = "linkForgotPassword";
+            this.linkForgotPassword.Size = new System.Drawing.Size(100, 15);
+            this.linkForgotPassword.TabIndex = 14;
+            this.linkForgotPassword.TabStop = true;
+            this.linkForgotPassword.Text = "Forgot Password?";
+            this.linkForgotPassword.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkForgotPassword_LinkClicked);
             // 
             // panelOtp
             // 
@@ -343,7 +356,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(452, 560);
+            this.ClientSize = new System.Drawing.Size(452, 600);
             this.Controls.Add(this.panelLogin);
             this.Controls.Add(this.panelOtp);
             this.FormStyle = FormStyles.ActionBar_None;
@@ -358,6 +371,7 @@
             this.panelOtp.ResumeLayout(false);
             this.panelOtp.PerformLayout();
             this.ResumeLayout(false);
+
         }
 
         #endregion
@@ -382,5 +396,6 @@
         private MaterialSkin.Controls.MaterialTextBox textBoxOtp;
         private MaterialSkin.Controls.MaterialLabel labelOtpInfo;
         private System.Windows.Forms.Timer otpCooldownTimer;
+        private System.Windows.Forms.LinkLabel linkForgotPassword;
     }
 }
