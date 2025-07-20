@@ -46,6 +46,9 @@
             this.buttonEditJob = new MaterialSkin.Controls.MaterialButton();
             this.buttonViewInvoice = new MaterialSkin.Controls.MaterialButton();
             this.buttonAddNewJob = new MaterialSkin.Controls.MaterialButton();
+            this.panelEmptyState = new System.Windows.Forms.Panel();
+            this.pictureBoxEmptyState = new System.Windows.Forms.PictureBox();
+            this.labelEmptyState = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -53,6 +56,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewJobs)).BeginInit();
             this.panelDetails.SuspendLayout();
             this.panelActions.SuspendLayout();
+            this.panelEmptyState.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxEmptyState)).BeginInit();
             this.SuspendLayout();
             // 
             // labelTitle
@@ -308,6 +313,38 @@
             this.buttonAddNewJob.UseVisualStyleBackColor = true;
             this.buttonAddNewJob.Click += new System.EventHandler(this.buttonAddNewJob_Click);
             // 
+            // panelEmptyState
+            // 
+            this.panelEmptyState.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.panelEmptyState.Controls.Add(this.labelEmptyState);
+            this.panelEmptyState.Controls.Add(this.pictureBoxEmptyState);
+            this.panelEmptyState.Location = new System.Drawing.Point(285, 250);
+            this.panelEmptyState.Name = "panelEmptyState";
+            this.panelEmptyState.Size = new System.Drawing.Size(326, 200);
+            this.panelEmptyState.TabIndex = 6;
+            this.panelEmptyState.Visible = false;
+            // 
+            // pictureBoxEmptyState
+            // 
+            this.pictureBoxEmptyState.Image = global::eshift_management.Properties.Resources.empty_box;
+            this.pictureBoxEmptyState.Location = new System.Drawing.Point(99, 15);
+            this.pictureBoxEmptyState.Name = "pictureBoxEmptyState";
+            this.pictureBoxEmptyState.Size = new System.Drawing.Size(128, 128);
+            this.pictureBoxEmptyState.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxEmptyState.TabIndex = 0;
+            this.pictureBoxEmptyState.TabStop = false;
+            // 
+            // labelEmptyState
+            // 
+            this.labelEmptyState.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.labelEmptyState.ForeColor = System.Drawing.Color.Gray;
+            this.labelEmptyState.Location = new System.Drawing.Point(3, 155);
+            this.labelEmptyState.Name = "labelEmptyState";
+            this.labelEmptyState.Size = new System.Drawing.Size(320, 45);
+            this.labelEmptyState.TabIndex = 1;
+            this.labelEmptyState.Text = "You haven\'t placed any jobs yet. Get started by clicking \'Place New Job\'!";
+            this.labelEmptyState.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // CustomerJobsPane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -316,6 +353,7 @@
             this.Controls.Add(this.buttonAddNewJob);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.labelTitle);
+            this.Controls.Add(this.panelEmptyState);
             this.Name = "CustomerJobsPane";
             this.Size = new System.Drawing.Size(898, 653);
             this.splitContainer1.Panel1.ResumeLayout(false);
@@ -327,8 +365,11 @@
             this.panelDetails.PerformLayout();
             this.panelActions.ResumeLayout(false);
             this.panelActions.PerformLayout();
+            this.panelEmptyState.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxEmptyState)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion
@@ -348,5 +389,8 @@
         private MaterialSkin.Controls.MaterialButton buttonEditJob;
         private MaterialSkin.Controls.MaterialButton buttonViewInvoice;
         private MaterialSkin.Controls.MaterialButton buttonAddNewJob;
+        private System.Windows.Forms.Panel panelEmptyState;
+        private System.Windows.Forms.PictureBox pictureBoxEmptyState;
+        private System.Windows.Forms.Label labelEmptyState;
     }
 }
