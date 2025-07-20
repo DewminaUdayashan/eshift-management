@@ -38,5 +38,10 @@ namespace eshift_management.Services.Interfaces
         /// Finds a user by email.
         /// </summary>
         Task<UserModel?> FindByEmailAsync(string email);
+
+        /// <summary>
+        /// Updates the user's password.
+        /// </summary>
+        Task UpdatePassword(UserModel user);
     }
 }

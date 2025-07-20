@@ -83,7 +83,7 @@ namespace eshift_management.Services.Implementations
 
             if (!user.IsEmailVerified)
             {
-                var customer =await _customerService.GetByIdAsync(user.Id??0);
+                var customer = await _customerService.GetByIdAsync(user.Id ?? 0);
                 var otp = GenerateOtp();
                 SendOtpEmail(otp, user.Email, customer?.FirstName ?? "there");
                 user.temporaryOTP = otp;
@@ -140,5 +140,56 @@ namespace eshift_management.Services.Implementations
                 await _userService.AddAsync(adminUser);
             }
         }
+
+        /// <inheritdoc />
+        public async Task<(bool IsSuccess, string? ErrorMessage)> UpdatePasswordAsync(int userId, string newPassword)
+        {
+            // Retrieve the user from the database
+            var user = await _userService.GetByIdAsync(userId);
+            if (user == null)
+            {
+                // This scenario should be rare if the user is logged in
+                return (false, "User not found.");
+            }
+
+            // Hash the new password before storing it
+            user.PasswordHash = PasswordHelper.HashPassword(newPassword);
+            user.UserType = UserType.Customer;
+            user.IsEmailVerified = true;
+
+            // Update the user record in the database
+            await _userService.UpdatePassword(user);
+
+            return (true, null); // Password updated successfully
+        }
+
+        /// <inheritdoc />
+        public async Task<(bool IsSuccess, string? ErrorMessage, UserModel? User)> RequestPasswordResetAsync(string email)
+        {
+            var user = await _userService.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return (false, "No account is associated with that email address.", null);
+            }
+
+            var customer = await _customerService.GetByIdAsync(user.Id ?? 0);
+            var otp = GenerateOtp();
+            SendPasswordResetEmail(otp, user.Email, customer?.FirstName ?? "there");
+
+            user.temporaryOTP = otp;
+            return (true, null, user);
+        }
+
+        private async void SendPasswordResetEmail(string otp, string email, string customerName)
+        {
+            const string subject = "Your E-Shift Password Reset Code";
+            string content = $@"
+                <p>We received a request to reset your password. Use the One-Time Password (OTP) below to proceed. This code is valid for 10 minutes.</p>
+                <h2 style='text-align:center; font-size: 36px; letter-spacing: 4px; color: #0D47A1;'>{otp}</h2>
+                <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>";
+            string htmlBody = _emailService.GetEmailHtmlTemplate("Reset Your Password", content, customerName);
+            await _emailService.SendEmailAsync(email, subject, htmlBody);
+        }
+
     }
 }

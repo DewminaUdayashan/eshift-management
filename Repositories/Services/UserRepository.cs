@@ -128,5 +128,16 @@ LIMIT 1;";
 
             await DbExecutor.ExecuteAsync(sql, entity);
         }
+
+        /// <inheritdoc />
+        public async Task UpdatePassword(UserModel user)
+        {
+            var sql = @"
+        UPDATE users
+        SET password_hash = @PasswordHash
+        WHERE id = @Id;";
+
+            await DbExecutor.ExecuteAsync(sql, new { user.PasswordHash, user.Id });
+        }
     }
 }

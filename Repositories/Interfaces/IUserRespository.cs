@@ -12,5 +12,10 @@ namespace eshift_management.Repositories.Interfaces
         /// <param name="email">The email to search for.</param>
         /// <returns>The user model, or null if not found.</returns>
         Task<UserModel?> FindByEmailAsync(string email);
+
+        /// <summary>
+        /// Updates the password for a user.
+        /// <paramref name="user">The user model containing the new password.</param>
+        Task UpdatePassword(UserModel user);
     }
 }

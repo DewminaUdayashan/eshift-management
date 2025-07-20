@@ -30,5 +30,20 @@ namespace eshift_management.Services.Interfaces
         /// Checks if the default administrator user exists, and creates it if not.
         /// </summary>
         Task EnsureAdminUserExistsAsync();
+
+        /// <summary>
+        /// Updates the password for a specified user.
+        /// </summary>
+        /// <param name="userId">The ID of the user whose password is to be updated.</param>
+        /// <param name="newPassword">The new password to be set.</param>
+        /// <returns>A tuple containing a boolean for success and a string for an error message if any.</returns>
+        Task<(bool IsSuccess, string? ErrorMessage)> UpdatePasswordAsync(int userId, string newPassword);
+
+        /// <summary>
+        /// Requests the password reset asynchronous.
+        /// </summary>
+        /// <param name="email">The email.</param>
+        /// <returns>A tuple containing boolean for success and a string for an error message if any and the UserModel</returns>
+        Task<(bool IsSuccess, string? ErrorMessage, UserModel? User)> RequestPasswordResetAsync(string email);
     }
 }
