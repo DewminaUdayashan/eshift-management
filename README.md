@@ -102,7 +102,11 @@ The system follows a **Layered Architecture**:
 
 6. **Build & Run**:
    - Set **platform target** to **x64** (Project → Properties → Build).
-   - Press **F5** to build and launch the application.
+   - Launch the application.
+   - Use following credentials to log into Admin account
+     - Email: admin@eshift.com
+     - Password: Admin@eshift123
+   - To log in as a customer, create a new customer account.
 
 ---
 
