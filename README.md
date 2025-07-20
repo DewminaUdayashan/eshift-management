@@ -133,9 +133,9 @@ This project is released under the MIT License.
 ---
 
 ## **Repository**
-**Source Code:** [https://github.com/DewminaUdayashan/eshift-management-system](https://github.com/DewminaUdayashan/eshift-management-system)
+**Source Code:** [https://github.com/DewminaUdayashan/eshift-management](https://github.com/DewminaUdayashan/eshift-management)
 
 ---
 
 ## **Author**
-Developed by **[Dewmina Udayashan]** (2025).
+Developed by **[Dewmina Udayashan](https://github.com/DewminaUdayashan)** (2025).
