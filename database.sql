@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 20, 2025 at 06:19 PM
+-- Generation Time: Jul 20, 2025 at 06:29 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,7 +48,9 @@ INSERT INTO `customers` (`user_id`, `first_name`, `last_name`, `phone_number`, `
 (12, 'Vivey', 'Mytaemin', '1245678999', 'ABC Rd', 'Galle', '80000'),
 (13, 'Celoko', 'Luxpolar', '1234567890', 'No 123, ABC Road, Thalpe', 'Galle', '80000'),
 (14, 'Rewafoh', 'Kissgy', '1234567890', 'Baddegama', 'Galle', '80000'),
-(15, 'Hekiseo', 'Kissgy', '1234567890', 'No:123, Thalpe', 'Galle', '80000');
+(15, 'Hekiseo', 'Kissgy', '1234567890', 'No:123, Thalpe', 'Galle', '80000'),
+(16, 'Yokeh', 'Luxpolar', '1234567890', 'ABC Road, Galle', 'Galle', '80000'),
+(17, 'John', 'Doe', '0777777777', 'ABC Road, Thalpe', 'Galle', '80000');
 
 -- --------------------------------------------------------
 
@@ -102,7 +104,8 @@ CREATE TABLE `jobs` (
 --
 
 INSERT INTO `jobs` (`id`, `customer_id`, `transport_unit_id`, `pickup_location`, `dropoff_location`, `pickup_date`, `load_size`, `description`, `status`, `total_cost`, `estimated_hours`, `rejection_reason`, `created_at`, `updated_at`) VALUES
-(17, 15, 2, 'No:123, Thalpe, Galle', 'NO:123, ABC Lance, Colombo', '2025-07-21 20:31:41', 'Small (1-2 rooms)', 'Please call me before handing over the package.', 'Scheduled', 10000.00, 5, NULL, '2025-07-20 15:02:19', '2025-07-20 15:04:14');
+(17, 15, 2, 'No:123, Thalpe, Galle', 'NO:123, ABC Lance, Colombo', '2025-07-21 20:31:41', 'Small (1-2 rooms)', 'Please call me before handing over the package.', 'Scheduled', 10000.00, 5, NULL, '2025-07-20 15:02:19', '2025-07-20 15:04:14'),
+(18, 16, NULL, 'ABC Road, Galle, Galle', 'ABC Road, Thalpe, Galle', '2025-07-21 21:55:46', 'Small (1-2 rooms)', '', 'Pending', NULL, NULL, NULL, '2025-07-20 16:26:10', '2025-07-20 16:26:10');
 
 -- --------------------------------------------------------
 
@@ -145,7 +148,8 @@ CREATE TABLE `trucks` (
 
 INSERT INTO `trucks` (`id`, `model`, `license_plate`, `status`) VALUES
 (1, 'Mahindra Bolero', 'LN-1020', 'Assigned'),
-(2, 'Demo Batta', 'LN-2322', 'Available');
+(2, 'Demo Batta', 'LN-2322', 'Available'),
+(3, 'Mahindra Bolero', 'LN-1021', 'Available');
 
 -- --------------------------------------------------------
 
@@ -175,21 +179,9 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `user_type`, `is_email_veri
 (12, 'vivey45096@mytaemin.com', '$2a$11$lPFHw6Ic1fvi08/4aYeoqOo/CndJLrtLlJZLRQq1tjWISXZc.N5/6', '', 1, '2025-07-17 15:36:13', '2025-07-17 15:36:32'),
 (13, 'celoko9350@luxpolar.com', '$2a$11$biceTTIGrgOjC0ZdBeT0SeVDS7Bh4SHjOM95PYXwrhoark12Yvsv.', 'Customer', 1, '2025-07-19 03:15:32', '2025-07-19 03:58:01'),
 (14, 'rewafoh808@kissgy.com', '$2a$11$PcqE6w3So85.pnT9UshLOez16jvMoviYUftq7Moaps9Sogokj5EDy', 'Customer', 1, '2025-07-19 03:55:20', '2025-07-19 09:21:07'),
-(15, 'hekise9444@kissgy.com', '$2a$11$5B/ZQ5KgGDrNrfD348s8POa2KvbPw9b05o6KZ73GLFuJjjV6xm6nq', 'Customer', 1, '2025-07-19 09:26:45', '2025-07-20 16:11:59');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `user_otps`
---
-
-CREATE TABLE `user_otps` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `otp_code` varchar(6) NOT NULL,
-  `otp_type` enum('Verification','Reset') NOT NULL,
-  `expires_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(15, 'hekise9444@kissgy.com', '$2a$11$5B/ZQ5KgGDrNrfD348s8POa2KvbPw9b05o6KZ73GLFuJjjV6xm6nq', 'Customer', 1, '2025-07-19 09:26:45', '2025-07-20 16:11:59'),
+(16, 'yokeh34854@luxpolar.com', '$2a$11$/2P/UBrzcoTJNfWj13OU3eUD0ShKHc.7ElXyFZbDpNes83pZlgD/G', 'Customer', 1, '2025-07-20 16:25:01', '2025-07-20 16:25:20'),
+(17, 'john@doe.com', '$2a$11$PFJsE.ufFYFVjO6.LzDcSOCj/niSGCKs/Ihi.MSyW4PNZUPdqR.p2', 'Customer', 0, '2025-07-20 16:27:45', '2025-07-20 16:27:45');
 
 --
 -- Indexes for dumped tables
@@ -240,13 +232,6 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email_UNIQUE` (`email`);
 
 --
--- Indexes for table `user_otps`
---
-ALTER TABLE `user_otps`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_user_otps_users_idx` (`user_id`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -260,7 +245,7 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `transport_units`
@@ -272,19 +257,13 @@ ALTER TABLE `transport_units`
 -- AUTO_INCREMENT for table `trucks`
 --
 ALTER TABLE `trucks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `user_otps`
---
-ALTER TABLE `user_otps`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- Constraints for dumped tables
@@ -310,12 +289,6 @@ ALTER TABLE `transport_units`
   ADD CONSTRAINT `fk_transport_units_employees_assistant` FOREIGN KEY (`assistant_id`) REFERENCES `employees` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transport_units_employees_driver` FOREIGN KEY (`driver_id`) REFERENCES `employees` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transport_units_trucks` FOREIGN KEY (`truck_id`) REFERENCES `trucks` (`id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `user_otps`
---
-ALTER TABLE `user_otps`
-  ADD CONSTRAINT `fk_user_otps_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
