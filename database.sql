@@ -1,170 +1,323 @@
--- E-Shift Database Creation Script
--- This script creates all the necessary tables and defines their relationships.
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Jul 20, 2025 at 06:19 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
--- -----------------------------------------------------
--- Table `users`
--- Stores core login information for all user types.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `email` VARCHAR(255) NOT NULL,
-  `password_hash` VARCHAR(255) NOT NULL,
-  `user_type` ENUM('Customer', 'Admin') NOT NULL,
-  `is_email_verified` TINYINT(1) NOT NULL DEFAULT 0,
-  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `email_UNIQUE` (`email` ASC));
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
 
--- -----------------------------------------------------
--- Table `customers`
--- Stores profile information for customers, linked one-to-one with the users table.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `customers` (
-  `user_id` INT NOT NULL,
-  `first_name` VARCHAR(100) NOT NULL,
-  `last_name` VARCHAR(100) NOT NULL,
-  `phone_number` VARCHAR(20) NOT NULL,
-  `address_line` VARCHAR(255) NOT NULL,
-  `city` VARCHAR(100) NOT NULL,
-  `postal_code` VARCHAR(20) NOT NULL,
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `fk_customers_users`
-    FOREIGN KEY (`user_id`)
-    REFERENCES `users` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE);
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
+--
+-- Database: `eshift_db`
+--
 
--- -----------------------------------------------------
--- Table `user_otps`
--- Stores one-time passwords for email verification and password resets.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `user_otps` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `user_id` INT NOT NULL,
-  `otp_code` VARCHAR(6) NOT NULL,
-  `otp_type` ENUM('Verification', 'Reset') NOT NULL,
-  `expires_at` DATETIME NOT NULL,
-  PRIMARY KEY (`id`),
-  INDEX `fk_user_otps_users_idx` (`user_id` ASC),
-  CONSTRAINT `fk_user_otps_users`
-    FOREIGN KEY (`user_id`)
-    REFERENCES `users` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE);
+-- --------------------------------------------------------
 
+--
+-- Table structure for table `customers`
+--
 
--- -----------------------------------------------------
--- Table `trucks`
--- Stores the company's fleet of vehicles.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `trucks` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `model` VARCHAR(100) NOT NULL,
-  `license_plate` VARCHAR(20) NOT NULL,
-  `status` ENUM('Available', 'Assigned') NOT NULL DEFAULT 'Available',
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `license_plate_UNIQUE` (`license_plate` ASC));
+CREATE TABLE `customers` (
+  `user_id` int(11) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `phone_number` varchar(20) NOT NULL,
+  `address_line` varchar(255) NOT NULL,
+  `city` varchar(100) NOT NULL,
+  `postal_code` varchar(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `customers`
+--
 
--- -----------------------------------------------------
--- Table `employees`
--- Stores staff information for drivers and assistants.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `employees` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `first_name` VARCHAR(100) NOT NULL,
-  `last_name` VARCHAR(100) NOT NULL,
-  `contact_number` VARCHAR(20) NOT NULL,
-  `position` ENUM('Driver', 'Assistant') NOT NULL,
-  `license_number` VARCHAR(50) NULL,
-  `status` ENUM('Available', 'Assigned') NOT NULL DEFAULT 'Available',
-  PRIMARY KEY (`id`));
+INSERT INTO `customers` (`user_id`, `first_name`, `last_name`, `phone_number`, `address_line`, `city`, `postal_code`) VALUES
+(5, 'Fordor', 'Hogn', '123456789', 'Temple road, Yokshma', 'Galle', '80000'),
+(7, 'Samabid', 'Fenexyy', '1234567892', 'ABC Road, Kurunduwatta', 'Galle', '80000'),
+(11, 'Kagoc', 'Mytaemin', '1234567890', 'No 123, Poddala', 'Galle', '80000'),
+(12, 'Vivey', 'Mytaemin', '1245678999', 'ABC Rd', 'Galle', '80000'),
+(13, 'Celoko', 'Luxpolar', '1234567890', 'No 123, ABC Road, Thalpe', 'Galle', '80000'),
+(14, 'Rewafoh', 'Kissgy', '1234567890', 'Baddegama', 'Galle', '80000'),
+(15, 'Hekiseo', 'Kissgy', '1234567890', 'No:123, Thalpe', 'Galle', '80000');
 
+-- --------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `transport_units`
--- Groups resources into operational teams. Ensures a resource can only be in one unit at a time.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `transport_units` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `unit_name` VARCHAR(100) NOT NULL,
-  `truck_id` INT NOT NULL,
-  `driver_id` INT NOT NULL,
-  `assistant_id` INT NOT NULL,
-  `status` ENUM('Available', 'OnJob') NOT NULL DEFAULT 'Available',
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `unit_name_UNIQUE` (`unit_name` ASC),
-  UNIQUE INDEX `truck_id_UNIQUE` (`truck_id` ASC),
-  UNIQUE INDEX `driver_id_UNIQUE` (`driver_id` ASC),
-  UNIQUE INDEX `assistant_id_UNIQUE` (`assistant_id` ASC),
-  CONSTRAINT `fk_transport_units_trucks`
-    FOREIGN KEY (`truck_id`)
-    REFERENCES `trucks` (`id`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_transport_units_employees_driver`
-    FOREIGN KEY (`driver_id`)
-    REFERENCES `employees` (`id`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_transport_units_employees_assistant`
-    FOREIGN KEY (`assistant_id`)
-    REFERENCES `employees` (`id`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE);
+--
+-- Table structure for table `employees`
+--
 
+CREATE TABLE `employees` (
+  `id` int(11) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `contact_number` varchar(20) NOT NULL,
+  `position` enum('Driver','Assistant') NOT NULL,
+  `license_number` varchar(50) DEFAULT NULL,
+  `status` enum('Available','Assigned') NOT NULL DEFAULT 'Available'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- -----------------------------------------------------
--- Table `jobs`
--- The central table for managing all customer shifting jobs.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `jobs` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `customer_id` INT NOT NULL,
-  `transport_unit_id` INT NULL,
-  `pickup_location` TEXT NOT NULL,
-  `dropoff_location` TEXT NOT NULL,
-  `pickup_date` DATETIME NOT NULL,
-  `load_size` VARCHAR(50) NOT NULL,
-  `description` TEXT NULL,
-  `status` ENUM('Pending', 'Approved', 'Rejected', 'Scheduled', 'OnGoing', 'Completed', 'Canceled') NOT NULL DEFAULT 'Pending',
-  `total_cost` DECIMAL(10,2) NULL,
-  `estimated_hours` INT NULL,
-  `rejection_reason` TEXT NULL,
-  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `fk_jobs_customers_idx` (`customer_id` ASC),
-  INDEX `fk_jobs_transport_units_idx` (`transport_unit_id` ASC),
-  CONSTRAINT `fk_jobs_customers`
-    FOREIGN KEY (`customer_id`)
-    REFERENCES `customers` (`user_id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_jobs_transport_units`
-    FOREIGN KEY (`transport_unit_id`)
-    REFERENCES `transport_units` (`id`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE);
+--
+-- Dumping data for table `employees`
+--
 
--- -----------------------------------------------------
--- Table `notifications`
--- Stores notifications for users, such as job status updates.
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `notifications` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `user_id` INT NOT NULL,
-  `message` TEXT NOT NULL,
-  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
-  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `fk_notifications_users_idx` (`user_id` ASC),
-  CONSTRAINT `fk_notifications_users`
-    FOREIGN KEY (`user_id`)
-    REFERENCES `users` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE);
+INSERT INTO `employees` (`id`, `first_name`, `last_name`, `contact_number`, `position`, `license_number`, `status`) VALUES
+(1, 'Johnn', 'Doe', '0777234654', 'Driver', '1234567890', 'Assigned'),
+(2, 'Elwin', 'Hopes', '0777654987', 'Assistant', 'N/A', 'Assigned');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `jobs`
+--
+
+CREATE TABLE `jobs` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `transport_unit_id` int(11) DEFAULT NULL,
+  `pickup_location` text NOT NULL,
+  `dropoff_location` text NOT NULL,
+  `pickup_date` datetime NOT NULL,
+  `load_size` varchar(50) NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('Pending','Approved','Rejected','Scheduled','OnGoing','Completed','Canceled') NOT NULL DEFAULT 'Pending',
+  `total_cost` decimal(10,2) DEFAULT NULL,
+  `estimated_hours` int(11) DEFAULT NULL,
+  `rejection_reason` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `jobs`
+--
+
+INSERT INTO `jobs` (`id`, `customer_id`, `transport_unit_id`, `pickup_location`, `dropoff_location`, `pickup_date`, `load_size`, `description`, `status`, `total_cost`, `estimated_hours`, `rejection_reason`, `created_at`, `updated_at`) VALUES
+(17, 15, 2, 'No:123, Thalpe, Galle', 'NO:123, ABC Lance, Colombo', '2025-07-21 20:31:41', 'Small (1-2 rooms)', 'Please call me before handing over the package.', 'Scheduled', 10000.00, 5, NULL, '2025-07-20 15:02:19', '2025-07-20 15:04:14');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `transport_units`
+--
+
+CREATE TABLE `transport_units` (
+  `id` int(11) NOT NULL,
+  `unit_name` varchar(100) NOT NULL,
+  `truck_id` int(11) NOT NULL,
+  `driver_id` int(11) NOT NULL,
+  `assistant_id` int(11) NOT NULL,
+  `status` enum('Available','OnJob') NOT NULL DEFAULT 'Available'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transport_units`
+--
+
+INSERT INTO `transport_units` (`id`, `unit_name`, `truck_id`, `driver_id`, `assistant_id`, `status`) VALUES
+(2, 'Team-001', 1, 1, 2, 'Available');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `trucks`
+--
+
+CREATE TABLE `trucks` (
+  `id` int(11) NOT NULL,
+  `model` varchar(100) NOT NULL,
+  `license_plate` varchar(20) NOT NULL,
+  `status` enum('Available','Assigned') NOT NULL DEFAULT 'Available'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `trucks`
+--
+
+INSERT INTO `trucks` (`id`, `model`, `license_plate`, `status`) VALUES
+(1, 'Mahindra Bolero', 'LN-1020', 'Assigned'),
+(2, 'Demo Batta', 'LN-2322', 'Available');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `user_type` enum('Customer','Admin') NOT NULL,
+  `is_email_verified` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `email`, `password_hash`, `user_type`, `is_email_verified`, `created_at`, `updated_at`) VALUES
+(5, 'fadem68637@fenexxy.com', '$2a$11$ERgWIJM3QkraqY98dFs9peaYXV1m4SUxArdQ5oYLAM9G6VXy7uaze', 'Customer', 0, '2025-07-11 01:38:03', '2025-07-11 01:38:03'),
+(7, 'samabi5174@fenexy.com', '$2a$11$RJ2ESfVPzNs51X52h8Szh.70Dbe.vctmpMv/LQ0q/vYexifpN9T/S', 'Customer', 1, '2025-07-11 02:45:38', '2025-07-11 15:49:47'),
+(10, 'admin@eshift.com', '$2a$11$te2XJ6I1brxutjl191sUb.SP9uD7SX.nVWRdI.tsct1oCzezSrjPW', 'Admin', 1, '2025-07-15 18:25:11', '2025-07-15 18:25:11'),
+(11, 'kagoc87584@mytaemin.com', '$2a$11$7uZXSDZyM35UByN49JEwfed6o9pG1w1sSpqM29Bs1GQ7eOtG5TDvC', 'Customer', 1, '2025-07-17 14:16:20', '2025-07-17 15:04:20'),
+(12, 'vivey45096@mytaemin.com', '$2a$11$lPFHw6Ic1fvi08/4aYeoqOo/CndJLrtLlJZLRQq1tjWISXZc.N5/6', '', 1, '2025-07-17 15:36:13', '2025-07-17 15:36:32'),
+(13, 'celoko9350@luxpolar.com', '$2a$11$biceTTIGrgOjC0ZdBeT0SeVDS7Bh4SHjOM95PYXwrhoark12Yvsv.', 'Customer', 1, '2025-07-19 03:15:32', '2025-07-19 03:58:01'),
+(14, 'rewafoh808@kissgy.com', '$2a$11$PcqE6w3So85.pnT9UshLOez16jvMoviYUftq7Moaps9Sogokj5EDy', 'Customer', 1, '2025-07-19 03:55:20', '2025-07-19 09:21:07'),
+(15, 'hekise9444@kissgy.com', '$2a$11$5B/ZQ5KgGDrNrfD348s8POa2KvbPw9b05o6KZ73GLFuJjjV6xm6nq', 'Customer', 1, '2025-07-19 09:26:45', '2025-07-20 16:11:59');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_otps`
+--
+
+CREATE TABLE `user_otps` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `otp_code` varchar(6) NOT NULL,
+  `otp_type` enum('Verification','Reset') NOT NULL,
+  `expires_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `customers`
+--
+ALTER TABLE `customers`
+  ADD PRIMARY KEY (`user_id`);
+
+--
+-- Indexes for table `employees`
+--
+ALTER TABLE `employees`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `jobs`
+--
+ALTER TABLE `jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_jobs_customers_idx` (`customer_id`),
+  ADD KEY `fk_jobs_transport_units_idx` (`transport_unit_id`);
+
+--
+-- Indexes for table `transport_units`
+--
+ALTER TABLE `transport_units`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unit_name_UNIQUE` (`unit_name`),
+  ADD UNIQUE KEY `truck_id_UNIQUE` (`truck_id`),
+  ADD UNIQUE KEY `driver_id_UNIQUE` (`driver_id`),
+  ADD UNIQUE KEY `assistant_id_UNIQUE` (`assistant_id`);
+
+--
+-- Indexes for table `trucks`
+--
+ALTER TABLE `trucks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `license_plate_UNIQUE` (`license_plate`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email_UNIQUE` (`email`);
+
+--
+-- Indexes for table `user_otps`
+--
+ALTER TABLE `user_otps`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_otps_users_idx` (`user_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `employees`
+--
+ALTER TABLE `employees`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `jobs`
+--
+ALTER TABLE `jobs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `transport_units`
+--
+ALTER TABLE `transport_units`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `trucks`
+--
+ALTER TABLE `trucks`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `user_otps`
+--
+ALTER TABLE `user_otps`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `customers`
+--
+ALTER TABLE `customers`
+  ADD CONSTRAINT `fk_customers_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `jobs`
+--
+ALTER TABLE `jobs`
+  ADD CONSTRAINT `fk_jobs_customers` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_jobs_transport_units` FOREIGN KEY (`transport_unit_id`) REFERENCES `transport_units` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `transport_units`
+--
+ALTER TABLE `transport_units`
+  ADD CONSTRAINT `fk_transport_units_employees_assistant` FOREIGN KEY (`assistant_id`) REFERENCES `employees` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transport_units_employees_driver` FOREIGN KEY (`driver_id`) REFERENCES `employees` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transport_units_trucks` FOREIGN KEY (`truck_id`) REFERENCES `trucks` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `user_otps`
+--
+ALTER TABLE `user_otps`
+  ADD CONSTRAINT `fk_user_otps_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
